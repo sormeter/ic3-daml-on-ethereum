@@ -105,24 +105,23 @@ template ERC20
         do
           return (lookupAllowance owner spender allowances)
     
-    choice Transfer : ContractId ERC20
+    choice Transfer : Bool
       with
         owner : Party
         receiver : Party
         value : Int
       controller owner
         do
-          case (lookupBalance owner balances) >= value of
-            True -> create this with name, creator, balances = (transfer owner receiver value balances), allowances
-            _ -> error "Insufficient balance"
-
-          -- if (lookupBalance owner balances) >= value
-          --   then do
-          --     create this with name, creator, balances = (transfer owner receiver value balances), allowances
-          --     return True
-          --   else do
-          --     create this with name, creator, balances, allowances
-          --     return False
+          -- case (lookupBalance owner balances) >= value of
+          --   True -> create this with name, creator, balances = (transfer owner receiver value balances), allowances
+          --   _ -> error "Insufficient balance"
+          if (lookupBalance owner balances) >= value
+            then do
+              create this with name, creator, balances = (transfer owner receiver value balances), allowances
+              return True
+            else do
+              create this with name, creator, balances, allowances
+              return False
 
     choice TransferFrom : Bool
       with
