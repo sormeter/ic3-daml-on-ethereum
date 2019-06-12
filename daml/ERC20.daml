@@ -1,23 +1,153 @@
-daml 1.2 module ERC20 where
-import Structs
+daml 1.2
+module ERC20 where
 
+data Balance = Balance {owner : Party, balance : Int}
+  deriving (Eq, Show)
 
-template TokenIssue
+sumBalances : [Balance] -> Int
+sumBalances bList =
+  foldl (\(acc : Int) (b : Balance) -> acc + b.balance) 0 bList
+
+lookupBalance : Party -> [Balance] -> Int
+lookupBalance p bList =
+  case bList of
+    [] -> 0
+    b :: bListRest -> if b.owner == p then b.balance else lookupBalance p bListRest
+
+setBalance : Party -> Int -> [Balance] -> [Balance]
+setBalance p value bList =
+  case bList of
+    [] -> [Balance p value]
+    b :: bListRest ->
+      if b.owner == p
+        then (Balance p value) :: bListRest
+        else b :: setBalance p value bListRest
+
+addTo : Party -> Int -> [Balance] -> [Balance]
+addTo p value bList =
+  case bList of
+    [] -> [Balance p value]
+    b :: bListRest ->
+      if b.owner == p
+        then (Balance p (b.balance + value)) :: bListRest
+        else b :: addTo p value bListRest
+
+removeFrom : Party -> Int -> [Balance] -> [Balance]
+removeFrom p value bList =
+  case bList of
+    [] -> [] -- Error
+    b :: bListRest ->
+      if b.owner == p
+        then if b.balance >= value
+          then (Balance p (b.balance - value)) :: bListRest
+          else [] -- Error
+        else b :: (removeFrom p value bListRest)
+
+transfer : Party -> Party -> Int -> [Balance] -> [Balance]
+transfer from to value bList =
+  addTo to value (removeFrom from value bList)
+
+lookupAllowance : Party -> Party -> [(Party, [Balance])] -> Int
+lookupAllowance owner spender allowances =
+  case allowances of
+    [] -> 0
+    (nextOwner, allows) :: restAllows ->
+      if nextOwner == owner then lookupBalance spender allows else lookupAllowance owner spender restAllows
+
+setAllowance : Party -> Party -> Int -> [(Party, [Balance])] -> [(Party, [Balance])]
+setAllowance owner spender value allowances =
+  case allowances of
+    [] -> [(owner, [Balance spender value])]
+    (nextOwner, allows) :: restAllows ->
+      if nextOwner == owner
+        then (nextOwner, setBalance spender value allows) :: restAllows
+        else (nextOwner, allows) :: (setAllowance owner spender value restAllows)
+
+template ERC20
   with
-    issuer: Party
-    operator: Party
-    investors: [Party]
-    outstanding: Int
-    balances: [(Party, Int)]
-    listing: ListingType
-    locked: Bool
+    name : Text
+    creator : Party
+    balances : [Balance]
+    allowances : [(Party, [Balance])]
   where
-    signatory issuer
-    observer investors
+    signatory creator
+    
+    agreement "ERC20 Token"
 
-    -- function totalSupply() public view returns (uint);
-    -- function balanceOf(address tokenOwner) public view returns (uint balance);
---     allowance(address tokenOwner, address spender) public view returns (uint remaining);
---     transfer(address to, uint tokens) public returns (bool success);
---     approve(address spender, uint tokens) public returns (bool success);
---     transferFrom(address from, address to, uint tokens) public returns (bool success);
+    nonconsuming choice Name : Text
+      with
+        caller : Party
+      controller caller
+        do
+          return name
+    
+    nonconsuming choice TotalSupply : Int
+      with
+        caller : Party
+      controller caller
+        do
+          return (sumBalances balances)
+    
+    nonconsuming choice BalanceOf : Int
+      with
+        caller : Party
+        party : Party
+      controller caller
+        do
+          return (lookupBalance party balances)
+    
+    nonconsuming choice Allowance : Int
+      with
+        caller : Party
+        owner : Party
+        spender : Party
+      controller caller
+        do
+          return (lookupAllowance owner spender allowances)
+    
+    choice Transfer : ContractId ERC20
+      with
+        owner : Party
+        receiver : Party
+        value : Int
+      controller owner
+        do
+          case (lookupBalance owner balances) >= value of
+            True -> create this with name, creator, balances = (transfer owner receiver value balances), allowances
+            _ -> error "Insufficient balance"
+
+          -- if (lookupBalance owner balances) >= value
+          --   then do
+          --     create this with name, creator, balances = (transfer owner receiver value balances), allowances
+          --     return True
+          --   else do
+          --     create this with name, creator, balances, allowances
+          --     return False
+
+    choice TransferFrom : Bool
+      with
+        spender : Party
+        owner : Party
+        receiver : Party
+        value : Int
+      controller spender
+        do
+          let
+            allowance = (lookupAllowance owner spender allowances)
+          if allowance >= value && (lookupBalance owner balances) >= value
+            then do
+              create this with name, creator, balances = (transfer owner receiver value balances), allowances = (setAllowance spender owner (allowance - value) allowances)
+              return True
+            else do
+              create this with name, creator, balances, allowances
+              return False
+    
+    choice Approve : Bool
+      with
+        owner : Party
+        spender : Party
+        value : Int
+      controller owner
+        do
+          create this with name, creator, balances, allowances = (setAllowance spender owner value allowances)
+          return True
