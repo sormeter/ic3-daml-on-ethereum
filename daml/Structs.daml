@@ -1,0 +1,17 @@
+daml 1.2 module Structs where
+
+
+data RealEstateListing = RealEstateListing with
+    issueName: Text
+    issueSymbol: Text
+    location: Text
+    fiatValueTotal: Decimal
+    chunkFiatSizes: Decimal
+    minChunks: Int
+    currency: Text
+  deriving (Eq, Show, Ord)
+
+
+data ListingType
+    = REAL_ESTATE (RealEstateListing)
+  deriving (Eq, Show, Ord)

@@ -1,0 +1,23 @@
+daml 1.2 module ERC20 where
+import Structs
+
+
+template TokenIssue
+  with
+    issuer: Party
+    operator: Party
+    investors: [Party]
+    outstanding: Int
+    balances: [(Party, Int)]
+    listing: ListingType
+    locked: Bool
+  where
+    signatory issuer
+    observer investors
+
+    -- function totalSupply() public view returns (uint);
+    -- function balanceOf(address tokenOwner) public view returns (uint balance);
+--     allowance(address tokenOwner, address spender) public view returns (uint remaining);
+--     transfer(address to, uint tokens) public returns (bool success);
+--     approve(address spender, uint tokens) public returns (bool success);
+--     transferFrom(address from, address to, uint tokens) public returns (bool success);
