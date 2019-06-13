@@ -2,6 +2,8 @@ network-dir	:=	network
 network-file	:=	$(network-dir)/network.name
 password-file	:=	$(network-dir)/password
 miner-threads	:=	1
+ledger-srv-port	:=	6865
+dist-dir	:=	dist
 
 
 # Ethereum bits
@@ -25,3 +27,17 @@ ethereum-connect-client:
 
 ethereum-cleanup:
 	rm -rfv $(network-dir)
+
+
+# DAML Ledger layer
+ledger-dar-build:
+	@daml build
+
+ledger-jar-build:
+	@sbt compile
+	@sbt assembly
+
+ledger-run:	ledger-dar-build	ledger-jar-build
+	@bash -c "trap 'trap - SIGINT SIGTERM ERR; echo Shutdown.; exit 0' SIGINT SIGTERM ERR; \
+		java -jar target/scala-2.12/damlonx-example.jar --port $(ledger-srv-port) \
+			$(dist-dir)/$(shell grep name ./daml.yaml | awk '{print $$2}').dar"
