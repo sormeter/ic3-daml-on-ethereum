@@ -135,13 +135,14 @@ template User
         do
           dir_ <- fetch directory
 
-          erc20Token <- create ERC20 with 
-            name = listing.issueSymbol
-            issuer = user
-            users = dir_.users
-            totalSupply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
-            balances = [(user, truncate (listing.fiatValueTotal / listing.chunkFiatSizes))]
-            allowances = []
+          erc20Token <- let supply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes) in
+            create ERC20 with
+              name = listing.issueSymbol
+              issuer = user
+              users = dir_.users
+              totalSupply = supply
+              balances = [(user, supply)]
+              allowances = []
           
           reList <- create RealEstateIssue with
             lister = user, investors = dir_.users, erc20 = erc20Token, ..
