@@ -74,17 +74,19 @@ scenarioTests = scenario do
 
 
 
-  -- u4JoinReq <- submit op do
+  -- u4JoinReq <- submit u4 do
   --   create UserJoinRequest with operator = op, user = u4, etherBalance = 12300.0, ..
 
   -- (u4C, directory, notices) <- submit op do
   --   exercise u4JoinReq UserJoinRequest_Grant with directory
-  
-  -- u5JoinReq <- submit op do
+
+  -- u5JoinReq <- submit u5 do
   --   create UserJoinRequest with operator = op, user = u5, etherBalance = 50.0, ..
 
   -- (u5C, directory, notices) <- submit op do
   --   exercise u5JoinReq UserJoinRequest_Grant with directory
+
+
 
   -- (u1TokenOffer, directory) <- submit u1 do
   --   exercise u1C User_UnlockToken with 
