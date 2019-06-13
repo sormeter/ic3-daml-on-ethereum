@@ -1,0 +1,165 @@
+daml 1.2 module Platform where
+-- import DA.List
+-- import Structs
+-- import ExchangeRates
+-- import Tokens
+
+
+template Directory
+  with
+    operator: Party
+    users: [Party]
+    -- tokenIssues: [ContractId TokenIssue]
+    -- lockedTokenIssues: [ContractId TokenUpdateNotice]
+    -- exchangeRates: [ContractId ExchangeRate]
+  where 
+    signatory operator
+    observer users
+
+    controller operator can 
+      -- Operator_PublishRate: (
+      --     ContractId ExchangeRate,
+      --     ContractId Directory
+      --   )
+      --   with
+      --     baseCurr: Currency
+      --     quoteCurr: Currency
+      --     exchRate: Decimal
+      --     percMove: Decimal
+      --   do
+      --     rate <- create ExchangeRate with
+      --       provider = operator, baseCurr, quoteCurr, exchRate, percMove, ..
+      --     dir <- create this with
+      --       exchangeRates = rate :: exchangeRates
+      --     return (rate, dir)
+
+      Directory_AddUser: (
+          -- [ContractId TokenUpdateNotice],
+          ContractId Directory
+        )
+        with
+          user: Party
+        do
+          -- unlockToLock <- mapA (\cid -> 
+          --     do
+          --       lock <- exercise cid TokenIssue_LockToken
+          --       cid_ <- fetch lock
+          --       create TokenUpdateNotice with 
+          --         issuer = cid_.issuer, operator, token = lock, newUsers = [user] 
+          --   ) tokenIssues
+
+          -- lockToLock <- mapA (\cid -> 
+          --     exercise cid TokenUpdateNotice_AddInvestor with newUser = user
+          --   ) lockedTokenIssues
+            
+          -- updExchRates <- mapA (\cid -> 
+          --     exercise cid ExchangeRate_AddUser with user
+          --   ) exchangeRates
+
+          dir <- create this with 
+            users = user :: users
+            -- tokenIssues = []
+            -- lockedTokenIssues = (lockToLock ++ unlockToLock)
+            -- exchangeRates = updExchRates
+
+          -- return ((lockToLock ++ unlockToLock), dir)
+          return (dir)
+      
+      -- Directory_AddUpdatedTokenIssue: (
+      --     ContractId Directory
+      --   )
+      --   with
+      --     updatedTokenIssue: ContractId TokenIssue
+      --     notice: ContractId TokenUpdateNotice
+      --   do
+      --     let
+      --       updLockedTokenIssues = delete notice lockedTokenIssues
+      --     create this with
+      --       tokenIssues = updatedTokenIssue :: tokenIssues; lockedTokenIssues = updLockedTokenIssues
+      
+    -- choice Directory_AddTokenIssue: (
+    --     ContractId Directory
+    --   )
+    --   with
+    --     issuer: Party
+    --     token: ContractId TokenIssue
+    --   controller issuer
+    --   do
+    --     assert (elem issuer users)
+    --     create this with
+    --       tokenIssues = token :: tokenIssues
+
+
+template UserJoinRequest
+  with
+    user: Party
+    operator: Party
+    etherBalance: Decimal
+  where
+    signatory user
+
+    controller operator can
+      UserJoinRequest_Grant: (
+          ContractId User,
+          ContractId Directory
+          -- [ContractId TokenUpdateNotice]
+        )
+        with
+          directory: ContractId Directory
+        do
+          dir_ <- fetch directory
+          assert (notElem user dir_.users)
+          newUser <- create User with ..
+          updDir <- exercise directory Directory_AddUser with ..
+          -- (unlockToLock, updDir) <- exercise directory Directory_AddUser with ..
+          -- return (newUser, updDir, unlockToLock)
+          return (newUser, updDir)
+
+
+template User
+  with
+    operator: Party
+    user: Party
+    etherBalance: Decimal
+  where
+    signatory operator, user
+
+--     controller user can
+--       nonconsuming User_ListNewOffering: (
+--           ContractId TokenIssue,
+--           ContractId Directory
+--         )
+--         with
+--           directory: ContractId Directory
+--           listing: RealEstateListing
+--         do
+--           let outstanding = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
+--           dir_ <- fetch directory
+--           token <- create TokenIssue with 
+--             issuer = user, investors = dir_.users, outstanding, balances = [], locked = False, ..
+--           dir <- exercise directory Directory_AddTokenIssue with issuer = user, ..
+--           return (token, dir)
+
+--       nonconsuming User_BuyinToToken: (
+--           ContractId TokenBuyinBid
+--         )
+--         with
+--           tokenOffer: ContractId TokenIssue
+--           quantity: Int
+--         do
+--           to_ <- fetch tokenOffer
+--           create TokenBuyinBid with investor = user, issuer = to_.issuer, ..
+      
+--       nonconsuming User_UnlockToken: (
+--           ContractId TokenIssue,
+--           ContractId Directory
+--         )
+--         with
+--           directory: ContractId Directory
+--           notice: ContractId TokenUpdateNotice
+--         do
+--           newTokenIssue <- exercise notice TokenUpdateNotice_Unlock
+--           dir <- exercise directory Directory_AddUpdatedTokenIssue with
+--             updatedTokenIssue = newTokenIssue, notice
+--           return (newTokenIssue, dir)
+        

@@ -1,5 +1,4 @@
-daml 1.2
-module ERC20 where
+daml 1.2 module ERC20 where
 
 data Balance = Balance {owner : Party, balance : Int}
   deriving (Eq, Show)

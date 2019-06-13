@@ -1,0 +1,38 @@
+daml 1.2 module ExchangeRates where
+import Structs
+
+
+template ExchangeRate
+  with
+    provider: Party
+    baseCurr: Currency
+    quoteCurr: Currency
+    exchRate: Decimal
+    percMove: Decimal
+    users: [Party]
+  where
+    signatory provider
+    observer users
+    
+    ensure (
+        exchRate >= 0.0
+      )
+
+    controller provider can
+      ExchangeRate_AddUser: (
+          ContractId ExchangeRate
+        )
+        with
+          user: Party
+        do
+          create this with
+            users = user :: users
+          
+      -- ExchangeRate_PublishRate: (
+      --     ContractId ExchangeRate
+      --   )
+      --   with
+      --     newExchRate: Decimal
+      --   do
+      --     create this with
+      --       exchRate = newExchRate

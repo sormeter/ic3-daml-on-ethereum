@@ -1,6 +1,13 @@
 daml 1.2 module Structs where
 
 
+data Currency 
+    = ETH
+    | USD
+    | EUR
+  deriving (Eq, Show, Ord)
+
+
 data RealEstateListing = RealEstateListing with
     issueName: Text
     issueSymbol: Text
