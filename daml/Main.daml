@@ -1,0 +1,5 @@
+daml 1.2 module Main where
+import Structs()
+import ERC20()
+-- import Platform()
+-- import ExchangeRates()
