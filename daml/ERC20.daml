@@ -1,62 +1,59 @@
 daml 1.2 module ERC20 where
 
-data Balance = Balance {owner : Party, balance : Int}
-  deriving (Eq, Show)
-
-sumBalances : [Balance] -> Int
+sumBalances : [(Party, Int)] -> Int
 sumBalances bList =
-  foldl (\(acc : Int) (b : Balance) -> acc + b.balance) 0 bList
+  foldl (\(acc : Int) (b : (Party, Int)) -> acc + (snd b)) 0 bList
 
-lookupBalance : Party -> [Balance] -> Int
+lookupBalance : Party -> [(Party, Int)] -> Int
 lookupBalance p bList =
   case bList of
     [] -> 0
-    b :: bListRest -> if b.owner == p then b.balance else lookupBalance p bListRest
+    (owner, balance) :: bListRest -> if owner == p then balance else lookupBalance p bListRest
 
-setBalance : Party -> Int -> [Balance] -> [Balance]
+setBalance : Party -> Int -> [(Party, Int)] -> [(Party, Int)]
 setBalance p value bList =
   case bList of
-    [] -> [Balance p value]
-    b :: bListRest ->
-      if b.owner == p
-        then (Balance p value) :: bListRest
-        else b :: setBalance p value bListRest
+    [] -> [(p, value)]
+    (owner, balance) :: bListRest ->
+      if owner == p
+        then (p, value) :: bListRest
+        else (owner, balance) :: setBalance p value bListRest
 
-addTo : Party -> Int -> [Balance] -> [Balance]
+addTo : Party -> Int -> [(Party, Int)] -> [(Party, Int)]
 addTo p value bList =
   case bList of
-    [] -> [Balance p value]
-    b :: bListRest ->
-      if b.owner == p
-        then (Balance p (b.balance + value)) :: bListRest
-        else b :: addTo p value bListRest
+    [] -> [(p, value)]
+    (owner, balance) :: bListRest ->
+      if owner == p
+        then (p, (balance + value)) :: bListRest
+        else (owner, balance) :: addTo p value bListRest
 
-removeFrom : Party -> Int -> [Balance] -> [Balance]
+removeFrom : Party -> Int -> [(Party, Int)] -> [(Party, Int)]
 removeFrom p value bList =
   case bList of
     [] -> [] -- Error
-    b :: bListRest ->
-      if b.owner == p
-        then if b.balance >= value
-          then (Balance p (b.balance - value)) :: bListRest
+    (owner, balance) :: bListRest ->
+      if owner == p
+        then if balance >= value
+          then (p, (balance - value)) :: bListRest
           else [] -- Error
-        else b :: (removeFrom p value bListRest)
+        else (owner, balance) :: (removeFrom p value bListRest)
 
-transfer : Party -> Party -> Int -> [Balance] -> [Balance]
+transfer : Party -> Party -> Int -> [(Party, Int)] -> [(Party, Int)]
 transfer from to value bList =
   addTo to value (removeFrom from value bList)
 
-lookupAllowance : Party -> Party -> [(Party, [Balance])] -> Int
+lookupAllowance : Party -> Party -> [(Party, [(Party, Int)])] -> Int
 lookupAllowance owner spender allowances =
   case allowances of
     [] -> 0
     (nextOwner, allows) :: restAllows ->
       if nextOwner == owner then lookupBalance spender allows else lookupAllowance owner spender restAllows
 
-setAllowance : Party -> Party -> Int -> [(Party, [Balance])] -> [(Party, [Balance])]
+setAllowance : Party -> Party -> Int -> [(Party, [(Party, Int)])] -> [(Party, [(Party, Int)])]
 setAllowance owner spender value allowances =
   case allowances of
-    [] -> [(owner, [Balance spender value])]
+    [] -> [(owner, [(spender, value)])]
     (nextOwner, allows) :: restAllows ->
       if nextOwner == owner
         then (nextOwner, setBalance spender value allows) :: restAllows
@@ -66,20 +63,20 @@ setAllowance owner spender value allowances =
 template ERC20
   with
     name : Text
-    creator : Party
+    issuer : Party
     users: [Party]
     -- Record to the total supply to use as a sanity-check to make sure
     -- that we don't create or destroy tokens whild transferring
     totalSupply : Int
-    balances : [Balance]
-    allowances : [(Party, [Balance])]
+    balances : [(Party, Int)]
+    allowances : [(Party, [(Party, Int)])]
   where
-    signatory creator
+    signatory issuer
     observer users
     
     agreement "ERC20 Token"
 
-    -- ensure totalSupply == sumBalances balances
+    ensure totalSupply == sumBalances balances
 
     nonconsuming choice Name : Text
       with
@@ -122,11 +119,7 @@ template ERC20
           assert (value >= 0)
           assert (value <= lookupBalance owner balances)
           create this with
-            name = name
-            creator = creator
-            totalSupply = totalSupply
             balances = (transfer owner receiver value balances)
-            allowances = allowances
 
     choice TransferFrom : ContractId ERC20
       with
@@ -142,9 +135,6 @@ template ERC20
           assert (value <= lookupBalance owner balances)
           assert (value <= allowance)
           create this with
-            name = name
-            creator = creator
-            totalSupply = totalSupply
             balances = (transfer owner receiver value balances)
             allowances = (setAllowance spender owner (allowance - value) allowances)
 
@@ -155,9 +145,28 @@ template ERC20
         value : Int
       controller owner
         do
+          assert (value >= 0)
           create this with
-            name = name
-            creator = creator
-            totalSupply = totalSupply
-            balances = balances
             allowances = (setAllowance spender owner value allowances)
+
+    -- choice Issue : ContractId ERC20
+    --   with
+    --     recipient : Party
+    --     value : Int
+    --   controller issuer
+    --     do
+    --       assert (value >= 0)
+    --       create this with
+    --         totalSupply = totalSupply + value
+    --         balances = (addTo recipient value balances)
+
+    -- choice Destroy : ContractId ERC20
+    --   with
+    --     amount : Int
+    --   controller issuer
+    --     do
+    --       assert (amount >= 0)
+    --       assert (amount <= lookupBalance issuer balances)
+    --       create this with
+    --         totalSupply = totalSupply - amount
+    --         balances = (removeFrom issuer amount balances)
