@@ -138,7 +138,7 @@ template User
           erc20Token <- create ERC20 with 
             name = listing.issueSymbol
             creator = user
-            owners = dir_.users
+            users = dir_.users
             totalSupply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
             balances = []
             allowances = []

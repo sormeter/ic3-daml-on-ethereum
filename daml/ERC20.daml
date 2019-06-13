@@ -67,7 +67,7 @@ template ERC20
   with
     name : Text
     creator : Party
-    owners: [Party]
+    users: [Party]
     -- Record to the total supply to use as a sanity-check to make sure
     -- that we don't create or destroy tokens whild transferring
     totalSupply : Int
@@ -75,7 +75,7 @@ template ERC20
     allowances : [(Party, [Balance])]
   where
     signatory creator
-    observer owners
+    observer users
     
     agreement "ERC20 Token"
 
