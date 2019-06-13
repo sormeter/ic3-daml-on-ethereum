@@ -79,7 +79,7 @@ template ERC20
     
     agreement "ERC20 Token"
 
-    ensure totalSupply == sumBalances balances
+    -- ensure totalSupply == sumBalances balances
 
     nonconsuming choice Name : Text
       with
