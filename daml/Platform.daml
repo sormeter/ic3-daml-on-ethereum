@@ -138,7 +138,6 @@ template User
 
           erc20Token <- create ERC20 with 
             name = listing.issueSymbol
-            operator
             creator = user
             owners = dir_.users
             balances = []

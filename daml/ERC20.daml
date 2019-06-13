@@ -66,7 +66,6 @@ setAllowance owner spender value allowances =
 template ERC20
   with
     name : Text
-    operator: Party
     creator : Party
     owners: [Party]
     balances : [Balance]
