@@ -41,3 +41,17 @@ ledger-run:	ledger-dar-build	ledger-jar-build
 	@bash -c "trap 'trap - SIGINT SIGTERM ERR; echo Shutdown.; exit 0' SIGINT SIGTERM ERR; \
 		java -jar target/scala-2.12/damlonx-example.jar --port $(ledger-srv-port) \
 			$(dist-dir)/$(shell grep name ./daml.yaml | awk '{print $$2}').dar"
+
+format-check:
+	@sbt scalaftmCheckAll
+
+compile: ledger-dar-build ledger-jar-build
+
+test:
+	@sbt test
+
+package:
+	@sbt assembly
+
+it: package
+	bash ./it.sh
