@@ -1,0 +1,14 @@
+daml 1.2 module RealEstateIssue where
+import Structs
+import ERC20
+
+
+template RealEstateIssue
+  with
+    lister: Party
+    operator: Party
+    listing: RealEstateListing
+    erc20: ContractId ERC20
+  where
+    signatory lister
+    
