@@ -148,6 +148,15 @@ template ERC20
           assert (value >= 0)
           create this with
             allowances = (setAllowance spender owner value allowances)
+    
+    choice RegisterUser : ContractId ERC20
+      with
+        caller : Party
+        newUser : Party
+      controller caller
+        do
+          create this with
+            users = newUser :: users
 
     -- choice Issue : ContractId ERC20
     --   with
