@@ -69,6 +69,9 @@ template ERC20
     operator: Party
     creator : Party
     owners: [Party]
+    -- Record to the total supply to use as a sanity-check to make sure
+    -- that we don't create or destroy tokens whild transferring
+    totalSupply : Int
     balances : [Balance]
     allowances : [(Party, [Balance])]
   where
@@ -76,6 +79,8 @@ template ERC20
     observer owners
     
     agreement "ERC20 Token"
+
+    ensure totalSupply == sumBalances balances
 
     nonconsuming choice Name : Text
       with
@@ -89,7 +94,7 @@ template ERC20
         caller : Party
       controller caller
         do
-          return (sumBalances balances)
+          return totalSupply
     
     nonconsuming choice BalanceOf : Int
       with
@@ -108,25 +113,23 @@ template ERC20
         do
           return (lookupAllowance owner spender allowances)
     
-    choice Transfer : Bool
+    choice Transfer : ContractId ERC20
       with
         owner : Party
         receiver : Party
         value : Int
       controller owner
         do
-          -- case (lookupBalance owner balances) >= value of
-          --   True -> create this with name, creator, balances = (transfer owner receiver value balances), allowances
-          --   _ -> error "Insufficient balance"
-          if (lookupBalance owner balances) >= value
-            then do
-              create this with name, creator, balances = (transfer owner receiver value balances), allowances
-              return True
-            else do
-              create this with name, creator, balances, allowances
-              return False
+          assert (value >= 0)
+          assert (value <= lookupBalance owner balances)
+          create this with
+            name = name
+            creator = creator
+            totalSupply = totalSupply
+            balances = (transfer owner receiver value balances)
+            allowances = allowances
 
-    choice TransferFrom : Bool
+    choice TransferFrom : ContractId ERC20
       with
         spender : Party
         owner : Party
@@ -136,21 +139,26 @@ template ERC20
         do
           let
             allowance = (lookupAllowance owner spender allowances)
-          if allowance >= value && (lookupBalance owner balances) >= value
-            then do
-              create this with name, creator, balances = (transfer owner receiver value balances), allowances = (setAllowance spender owner (allowance - value) allowances)
-              return True
-            else do
-              create this with name, creator, balances, allowances
-              return False
-    
-    choice Approve : Bool
+          assert (value >= 0)
+          assert (value <= lookupBalance owner balances)
+          assert (value <= allowance)
+          create this with
+            name = name
+            creator = creator
+            totalSupply = totalSupply
+            balances = (transfer owner receiver value balances)
+            allowances = (setAllowance spender owner (allowance - value) allowances)
+
+    choice Approve : ContractId ERC20
       with
         owner : Party
         spender : Party
         value : Int
       controller owner
         do
-          create this with name, creator, balances, allowances = (setAllowance spender owner value allowances)
-          return True
- 
+          create this with
+            name = name
+            creator = creator
+            totalSupply = totalSupply
+            balances = balances
+            allowances = (setAllowance spender owner value allowances)
