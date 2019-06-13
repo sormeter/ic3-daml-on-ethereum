@@ -2,6 +2,7 @@ daml 1.2 module Scenarios where
 -- import DA.List
 import Structs
 import Platform
+-- import RealEstateIssue
 
 
 scenarioTests = scenario do
@@ -22,18 +23,19 @@ scenarioTests = scenario do
       minChunks = 1
       currency = "USD"
 
-    u2Listing = RealEstateListing with
-      issueName = "VILLA QUARDA"
-      issueSymbol = "VQRD"
-      location = "Argostoli"
-      fiatValueTotal = 20000000.0
-      chunkFiatSizes = 10000.0
-      minChunks = 1
-      currency = "EUR"
+    -- u2Listing = RealEstateListing with
+    --   issueName = "VILLA QUARDA"
+    --   issueSymbol = "VQRD"
+    --   location = "Argostoli"
+    --   fiatValueTotal = 20000000.0
+    --   chunkFiatSizes = 10000.0
+    --   minChunks = 1
+    --   currency = "EUR"
 
   directory <- submit op do
     create Directory with 
-      operator = op,  users = [], tokenIssues = [], lockedTokenIssues = [], exchangeRates = []
+      -- operator = op,  users = [], tokenIssues = [], lockedTokenIssues = [], exchangeRates = []
+      operator = op,  users = [], realEstateIssues = [], lockedRealEstateIssues = []
   
   u1JoinReq <- submit u1 do
     create UserJoinRequest with operator = op, user = u1, etherBalance = 800.0, ..
@@ -63,9 +65,14 @@ scenarioTests = scenario do
   --   exercise directory Operator_PublishRate with
   --     baseCurr = ETH, quoteCurr = EUR, exchRate = 214.97, percMove = -2.53
 
-  -- (u1TokenOffer, directory) <- submit u1 do
-  --   exercise u1C User_ListNewOffering with
-  --     directory, listing = u1Listing
+
+
+  (erc20Token, realEstateListing, directory) <- submit u1 do
+    exercise u1C User_ListNewOffering with
+      directory, listing = u1Listing
+
+
+
 
   -- u4JoinReq <- submit op do
   --   create UserJoinRequest with operator = op, user = u4, etherBalance = 12300.0, ..
@@ -73,10 +80,6 @@ scenarioTests = scenario do
   -- (u4C, directory, notices) <- submit op do
   --   exercise u4JoinReq UserJoinRequest_Grant with directory
   
-  -- (u2TokenOffer, directory) <- submit u2 do
-  --   exercise u2C User_ListNewOffering with
-  --     directory, listing = u2Listing
-
   -- u5JoinReq <- submit op do
   --   create UserJoinRequest with operator = op, user = u5, etherBalance = 50.0, ..
 
@@ -87,19 +90,14 @@ scenarioTests = scenario do
   --   exercise u1C User_UnlockToken with 
   --     directory, notice = (notices !! 0)
 
-  -- (u2TokenOffer, directory) <- submit u2 do
-  --   exercise u2C User_UnlockToken with 
-  --     directory, notice = (notices !! 1)
-
-
-
-
-
-
 
 
 
   -- assert (False == True)
+
+
+
+
 
   -- u2BuyinBid_1 <- submit u2 do
   --   exercise u2C User_BuyinToToken with

@@ -1,7 +1,8 @@
 daml 1.2 module Platform where
 -- import DA.List
--- import Structs
-import ExchangeRates
+import Structs
+-- import ExchangeRates
+import RealEstateIssue
 import ERC20
 
 
@@ -9,9 +10,9 @@ template Directory
   with
     operator: Party
     users: [Party]
-    tokenIssues: [ContractId ERC20]
-    lockedTokenIssues: [ContractId TokenUpdateNotice]
-    exchangeRates: [ContractId ExchangeRate]
+    realEstateIssues: [ContractId RealEstateIssue]
+    lockedRealEstateIssues: [ContractId LockRealEstateIssue]
+    -- exchangeRates: [ContractId ExchangeRate]
   where 
     signatory operator
     observer users
@@ -34,59 +35,60 @@ template Directory
       --     return (rate, dir)
 
       Directory_AddUser: (
-          [ContractId TokenUpdateNotice],
+          [ContractId LockRealEstateIssue],
           ContractId Directory
         )
         with
           user: Party
         do
-          unlockToLock <- mapA (\cid -> 
-              do
-                lock <- exercise cid TokenIssue_LockToken
-                cid_ <- fetch lock
-                create TokenUpdateNotice with 
-                  issuer = cid_.creator, operator, token = lock, newUsers = [user] 
-            ) tokenIssues
+          -- unlockToLock <- mapA (\cid -> 
+          --     do
+          --       lock <- exercise cid TokenIssue_LockToken
+          --       cid_ <- fetch lock
+          --       create LockRealEstateIssue with 
+          --         issuer = cid_.creator, operator, token = lock, newUsers = [user] 
+          --   ) realEstateIssues
 
-          lockToLock <- mapA (\cid -> 
-              exercise cid TokenUpdateNotice_AddInvestor with newUser = user
-            ) lockedTokenIssues
+          -- lockToLock <- mapA (\cid -> 
+          --     exercise cid TokenUpdateNotice_AddInvestor with newUser = user
+          --   ) lockedRealEstateIssues
             
-          updExchRates <- mapA (\cid -> 
-              exercise cid ExchangeRate_AddUser with user
-            ) exchangeRates
+          -- updExchRates <- mapA (\cid -> 
+          --     exercise cid ExchangeRate_AddUser with user
+          --   ) exchangeRates
 
           dir <- create this with 
             users = user :: users
-            tokenIssues = []
-            lockedTokenIssues = (lockToLock ++ unlockToLock)
-            exchangeRates = updExchRates
+            realEstateIssues = []
+            lockedRealEstateIssues = []
+            -- lockedRealEstateIssues = (lockToLock ++ unlockToLock)
+            -- exchangeRates = updExchRates
 
-          return ((lockToLock ++ unlockToLock), dir)
+          return ([], dir)
       
     --   Directory_AddUpdatedTokenIssue: (
     --       ContractId Directory
     --     )
     --     with
     --       updatedTokenIssue: ContractId TokenIssue
-    --       notice: ContractId TokenUpdateNotice
+    --       notice: ContractId LockRealEstateIssue
     --     do
     --       let
-    --         updLockedTokenIssues = delete notice lockedTokenIssues
+    --         updLockedTokenIssues = delete notice lockedRealEstateIssues
     --       create this with
-    --         tokenIssues = updatedTokenIssue :: tokenIssues; lockedTokenIssues = updLockedTokenIssues
+    --         realEstateIssues = updatedTokenIssue :: realEstateIssues; lockedRealEstateIssues = updLockedTokenIssues
       
-    -- choice Directory_AddTokenIssue: (
-    --     ContractId Directory
-    --   )
-    --   with
-    --     issuer: Party
-    --     token: ContractId TokenIssue
-    --   controller issuer
-    --   do
-    --     assert (elem issuer users)
-    --     create this with
-    --       tokenIssues = token :: tokenIssues
+    choice Directory_AddRealEstateIssue: (
+        ContractId Directory
+      )
+      with
+        issuer: Party
+        issue: ContractId RealEstateIssue
+      controller issuer
+      do
+        assert (elem issuer users)
+        create this with
+          realEstateIssues = issue :: realEstateIssues
 
 
 template UserJoinRequest
@@ -101,7 +103,7 @@ template UserJoinRequest
       UserJoinRequest_Grant: (
           ContractId User,
           ContractId Directory,
-          [ContractId TokenUpdateNotice]
+          [ContractId LockRealEstateIssue]
         )
         with
           directory: ContractId Directory
@@ -122,21 +124,33 @@ template User
     signatory user, operator
 
     controller user can
-      -- nonconsuming User_ListNewOffering: (
-      --     ContractId TokenIssue,
-      --     ContractId Directory
-      --   )
-      --   with
-      --     directory: ContractId Directory
-      --     listing: RealEstateListing
-      --   do
-      --     assert (elem listing.currency currencies)
-      --     let outstanding = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
-      --     dir_ <- fetch directory
-      --     token <- create TokenIssue with 
-      --       issuer = user, investors = dir_.users, outstanding, balances = [], locked = False, ..
-      --     dir <- exercise directory Directory_AddTokenIssue with issuer = user, ..
-      --     return (token, dir)
+      nonconsuming User_ListNewOffering: (
+          ContractId ERC20,
+          ContractId RealEstateIssue,
+          ContractId Directory
+        )
+        with
+          directory: ContractId Directory
+          listing: RealEstateListing
+        do
+          let outstanding = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
+          dir_ <- fetch directory
+
+          erc20Token <- create ERC20 with 
+            name = listing.issueSymbol
+            operator
+            creator = user
+            owners = dir_.users
+            balances = []
+            allowances = []
+          
+          reList <- create RealEstateIssue with
+            lister = user, investors = dir_.users, erc20 = erc20Token, ..
+            
+          dir <- exercise directory Directory_AddRealEstateIssue with 
+            issuer = user, issue = reList
+
+          return (erc20Token, reList, dir)
 
       -- nonconsuming User_BuyinToToken: (
       --     ContractId TokenBuyinBid
@@ -148,13 +162,14 @@ template User
       --     to_ <- fetch tokenOffer
       --     create TokenBuyinBid with investor = user, issuer = to_.issuer, ..
       
+
       -- nonconsuming User_UnlockToken: (
       --     ContractId TokenIssue,
       --     ContractId Directory
       --   )
       --   with
       --     directory: ContractId Directory
-      --     notice: ContractId TokenUpdateNotice
+      --     notice: ContractId LockRealEstateIssue
       --   do
       --     newTokenIssue <- exercise notice TokenUpdateNotice_Unlock
       --     dir <- exercise directory Directory_AddUpdatedTokenIssue with
