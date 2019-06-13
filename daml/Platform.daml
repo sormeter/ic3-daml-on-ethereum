@@ -133,14 +133,13 @@ template User
           directory: ContractId Directory
           listing: RealEstateListing
         do
-          let outstanding = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
           dir_ <- fetch directory
 
           erc20Token <- create ERC20 with 
             name = listing.issueSymbol
-            operator
             creator = user
             owners = dir_.users
+            totalSupply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
             balances = []
             allowances = []
           
