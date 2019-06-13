@@ -1,5 +1,4 @@
-daml 1.2
-module ERC20 where
+daml 1.2 module ERC20 where
 
 data Balance = Balance {owner : Party, balance : Int}
   deriving (Eq, Show)
@@ -63,10 +62,13 @@ setAllowance owner spender value allowances =
         then (nextOwner, setBalance spender value allows) :: restAllows
         else (nextOwner, allows) :: (setAllowance owner spender value restAllows)
 
+
 template ERC20
   with
     name : Text
+    operator: Party
     creator : Party
+    owners: [Party]
     -- Record to the total supply to use as a sanity-check to make sure
     -- that we don't create or destroy tokens whild transferring
     totalSupply : Int
@@ -74,6 +76,7 @@ template ERC20
     allowances : [(Party, [Balance])]
   where
     signatory creator
+    observer owners
     
     agreement "ERC20 Token"
 

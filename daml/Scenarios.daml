@@ -1,0 +1,130 @@
+daml 1.2 module Scenarios where
+-- import DA.List
+import Structs
+import Platform
+-- import RealEstateIssue
+
+
+scenarioTests = scenario do
+  op <- getParty "0xOPERATOR"
+  u1 <- getParty "0x11111111"
+  u2 <- getParty "0x22222222"
+  u3 <- getParty "0x33333333"
+  u4 <- getParty "0x44444444"
+  u5 <- getParty "0x55555555"
+
+  let
+    u1Listing = RealEstateListing with
+      issueName = "THIRTEEN EAST + WEST"
+      issueSymbol = "13EW"
+      location = "New York"
+      fiatValueTotal = 25000000.0
+      chunkFiatSizes = 100.0
+      minChunks = 1
+      currency = "USD"
+
+    -- u2Listing = RealEstateListing with
+    --   issueName = "VILLA QUARDA"
+    --   issueSymbol = "VQRD"
+    --   location = "Argostoli"
+    --   fiatValueTotal = 20000000.0
+    --   chunkFiatSizes = 10000.0
+    --   minChunks = 1
+    --   currency = "EUR"
+
+  directory <- submit op do
+    create Directory with 
+      -- operator = op,  users = [], tokenIssues = [], lockedTokenIssues = [], exchangeRates = []
+      operator = op,  users = [], realEstateIssues = [], lockedRealEstateIssues = []
+  
+  u1JoinReq <- submit u1 do
+    create UserJoinRequest with operator = op, user = u1, etherBalance = 800.0, ..
+
+  (u1C, directory, notices) <- submit op do
+    exercise u1JoinReq UserJoinRequest_Grant with directory
+
+  u2JoinReq <- submit u2 do
+    create UserJoinRequest with operator = op, user = u2, etherBalance = 230.0, ..
+
+  (u2C, directory, notices) <- submit op do
+    exercise u2JoinReq UserJoinRequest_Grant with directory
+
+  u3JoinReq <- submit u3 do
+    create UserJoinRequest with operator = op, user = u3, etherBalance = 600.0, ..
+
+  (u3C, directory, notices) <- submit op do
+    exercise u3JoinReq UserJoinRequest_Grant with directory
+
+
+  
+  -- (rateETH_USD, directory) <- submit op do 
+  --   exercise directory Operator_PublishRate with
+  --     baseCurr = ETH, quoteCurr = USD, exchRate = 243.99, percMove = -2.99
+
+  -- (rateETH_USD, directory) <- submit op do 
+  --   exercise directory Operator_PublishRate with
+  --     baseCurr = ETH, quoteCurr = EUR, exchRate = 214.97, percMove = -2.53
+
+
+
+  (erc20Token, realEstateListing, directory) <- submit u1 do
+    exercise u1C User_ListNewOffering with
+      directory, listing = u1Listing
+
+
+
+
+  -- u4JoinReq <- submit op do
+  --   create UserJoinRequest with operator = op, user = u4, etherBalance = 12300.0, ..
+
+  -- (u4C, directory, notices) <- submit op do
+  --   exercise u4JoinReq UserJoinRequest_Grant with directory
+  
+  -- u5JoinReq <- submit op do
+  --   create UserJoinRequest with operator = op, user = u5, etherBalance = 50.0, ..
+
+  -- (u5C, directory, notices) <- submit op do
+  --   exercise u5JoinReq UserJoinRequest_Grant with directory
+
+  -- (u1TokenOffer, directory) <- submit u1 do
+  --   exercise u1C User_UnlockToken with 
+  --     directory, notice = (notices !! 0)
+
+
+
+
+  -- assert (False == True)
+
+
+
+
+
+  -- u2BuyinBid_1 <- submit u2 do
+  --   exercise u2C User_BuyinToToken with
+  --     tokenOffer = u1TokenOffer, quantity = 200
+  
+  -- (u1TokenOffer, u1Shares1) <- submit u1 do
+  --   exercise u2BuyinBid_1 TokenBuyinBid_AcceptTokenBid
+  
+
+
+
+--   i2BuyinBid_1 <- submit i2 do
+--     exercise i2C BuyinToToken with
+--       tokenOffering = d1Offer1, quantity = 400
+  
+--   (d1Offer1, i2Shares1) <- submit d1 do
+--     exercise i2BuyinBid_1 AcceptTokenBid
+  
+--   i3BuyinBid_1 <- submit i3 do
+--     exercise i3C BuyinToToken with
+--       tokenOffering = d1Offer1, quantity = 400
+  
+--   (d1Offer1, i3Shares1) <- submit d1 do
+--     exercise i3BuyinBid_1 AcceptTokenBid
+  
+  -- balReq <- submit d1 do
+  --   exercise d1Offer1 BalanceOf with
+  --     requestor = d1, walletAddress = i1_wa
+  
+  return ()

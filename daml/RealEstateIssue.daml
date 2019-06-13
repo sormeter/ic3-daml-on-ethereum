@@ -1,0 +1,43 @@
+daml 1.2 module RealEstateIssue where
+import Structs
+import ERC20
+
+
+template RealEstateIssue
+  with
+    lister: Party
+    operator: Party
+    investors: [Party]
+    listing: RealEstateListing
+    erc20: ContractId ERC20
+  where
+    signatory lister
+    observer investors
+    
+
+template LockRealEstateIssue
+  with
+    issuer: Party
+    operator: Party
+    token: ContractId ERC20
+    newUsers: [Party]
+  where
+    signatory operator
+
+--     controller issuer can
+--     --   TokenUpdateNotice_Unlock: (
+--     --       ContractId ERC20
+--     --     )
+--     --     do
+--     --       exercise token TokenIssue_AddInvestors with
+--     --         newInvestors = newUsers
+    
+--     controller operator can
+--       TokenUpdateNotice_AddInvestor: (
+--           ContractId LockRealEstateIssue
+--         )
+--         with
+--           newUser: Party
+--         do
+--           create this with
+--             newUsers = newUser :: newUsers
