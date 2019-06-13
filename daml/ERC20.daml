@@ -65,11 +65,15 @@ setAllowance owner spender value allowances =
 template ERC20
   with
     name : Text
+    operator: Party
     creator : Party
+    owners: [Party]
     balances : [Balance]
     allowances : [(Party, [Balance])]
+    locked: Bool
   where
     signatory creator
+    observer owners
     
     agreement "ERC20 Token"
 
@@ -149,3 +153,39 @@ template ERC20
         do
           create this with name, creator, balances, allowances = (setAllowance spender owner value allowances)
           return True
+    
+    controller operator can
+      TokenIssue_LockToken: (
+          ContractId ERC20
+        )
+        do
+          create this with
+            locked = True
+
+
+template TokenUpdateNotice
+  with
+    issuer: Party
+    operator: Party
+    token: ContractId ERC20
+    newUsers: [Party]
+  where
+    signatory operator
+
+    controller issuer can
+    --   TokenUpdateNotice_Unlock: (
+    --       ContractId ERC20
+    --     )
+    --     do
+    --       exercise token TokenIssue_AddInvestors with
+    --         newInvestors = newUsers
+    
+    controller operator can
+      TokenUpdateNotice_AddInvestor: (
+          ContractId TokenUpdateNotice
+        )
+        with
+          newUser: Party
+        do
+          create this with
+            newUsers = newUser :: newUsers

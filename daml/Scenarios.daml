@@ -12,48 +12,48 @@ scenarioTests = scenario do
   u4 <- getParty "0x44444444"
   u5 <- getParty "0x55555555"
 
+  let
+    u1Listing = RealEstateListing with
+      issueName = "THIRTEEN EAST + WEST"
+      issueSymbol = "13EW"
+      location = "New York"
+      fiatValueTotal = 25000000.0
+      chunkFiatSizes = 100.0
+      minChunks = 1
+      currency = "USD"
+
+    u2Listing = RealEstateListing with
+      issueName = "VILLA QUARDA"
+      issueSymbol = "VQRD"
+      location = "Argostoli"
+      fiatValueTotal = 20000000.0
+      chunkFiatSizes = 10000.0
+      minChunks = 1
+      currency = "EUR"
+
   directory <- submit op do
     create Directory with 
-      operator = op,  users = []
+      operator = op,  users = [], tokenIssues = [], lockedTokenIssues = [], exchangeRates = []
   
   u1JoinReq <- submit u1 do
     create UserJoinRequest with operator = op, user = u1, etherBalance = 800.0, ..
 
-  -- (u2C, directory, notices) <- submit op do
-  (u1C, directory) <- submit op do
+  (u1C, directory, notices) <- submit op do
     exercise u1JoinReq UserJoinRequest_Grant with directory
 
   u2JoinReq <- submit u2 do
     create UserJoinRequest with operator = op, user = u2, etherBalance = 230.0, ..
 
-  -- (u2C, directory, notices) <- submit op do
-  (u2C, directory) <- submit op do
+  (u2C, directory, notices) <- submit op do
     exercise u2JoinReq UserJoinRequest_Grant with directory
 
   u3JoinReq <- submit u3 do
     create UserJoinRequest with operator = op, user = u3, etherBalance = 600.0, ..
 
-  (u3C, directory) <- submit op do
+  (u3C, directory, notices) <- submit op do
     exercise u3JoinReq UserJoinRequest_Grant with directory
 
-  -- let
-  --   u1Listing = RealEstateListing with
-  --     issueName = "THIRTEEN EAST + WEST"
-  --     issueSymbol = "13EW"
-  --     location = "New York"
-  --     fiatValueTotal = 25000000.0
-  --     chunkFiatSizes = 100.0
-  --     minChunks = 1
-  --     currency = "USD"
 
-  --   u2Listing = RealEstateListing with
-  --     issueName = "VILLA QUARDA"
-  --     issueSymbol = "VQRD"
-  --     location = "Argostoli"
-  --     fiatValueTotal = 20000000.0
-  --     chunkFiatSizes = 10000.0
-  --     minChunks = 1
-  --     currency = "EUR"
   
   -- (rateETH_USD, directory) <- submit op do 
   --   exercise directory Operator_PublishRate with
