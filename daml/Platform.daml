@@ -133,10 +133,10 @@ template User
           directory: ContractId Directory
           listing: RealEstateListing
         do
+          let supply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes)
           dir_ <- fetch directory
 
-          erc20Token <- let supply = truncate (listing.fiatValueTotal / listing.chunkFiatSizes) in
-            create ERC20 with
+          erc20Token <- create ERC20 with
               name = listing.issueSymbol
               issuer = user
               users = dir_.users
