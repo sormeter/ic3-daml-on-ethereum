@@ -13,6 +13,16 @@ template RealEstateIssue
   where
     signatory lister
     observer investors
+
+    controller lister can
+      RealEstateIssue_UpdateERC20: (
+          ContractId RealEstateIssue
+        )
+        with
+          newERC20: ContractId ERC20
+        do
+          create this with
+            erc20 = newERC20
     
 
 template LockRealEstateIssue
@@ -41,3 +51,49 @@ template LockRealEstateIssue
 --         do
 --           create this with
 --             newUsers = newUser :: newUsers
+
+
+template RealEstateBuyinBid
+  with
+    investor: Party
+    issuer: Party
+    realEstateListing: ContractId RealEstateIssue
+    quantity: Int
+  where
+    signatory investor
+
+    controller issuer can
+      RealEstateBuyinBid_AcceptBuyinBid: (
+          ContractId ERC20,
+          ContractId RealEstateIssue,
+          ContractId RealEstateShareContract
+        )
+        do
+          rel <- fetch realEstateListing
+
+          assert (
+              rel.lister == issuer
+            )
+
+          updERC20 <- exercise rel.erc20 Transfer with
+            owner = rel.lister
+            receiver = investor
+            value = quantity
+          
+          updRELIssue <- exercise realEstateListing RealEstateIssue_UpdateERC20 with
+            newERC20 = updERC20
+
+          shares <- create RealEstateShareContract with 
+            listingInfo = rel.listing, ..
+
+          return (updERC20, updRELIssue, shares)
+
+
+template RealEstateShareContract
+  with
+    issuer: Party
+    investor: Party
+    listingInfo: RealEstateListing
+    quantity: Int
+  where
+    signatory issuer, investor
