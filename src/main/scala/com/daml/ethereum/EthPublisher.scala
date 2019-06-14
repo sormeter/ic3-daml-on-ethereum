@@ -1,4 +1,4 @@
-package com.daml.ledger.damlonxexample
+package com.daml.ethereum
 
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
