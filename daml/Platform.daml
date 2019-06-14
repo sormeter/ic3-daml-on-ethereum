@@ -1,7 +1,7 @@
 daml 1.2 module Platform where
 import DA.List
 import Structs
--- import ExchangeRates
+import ExchangeRates
 import RealEstateIssue
 import ERC20
 
@@ -12,27 +12,27 @@ template Directory
     users: [Party]
     realEstateIssues: [ContractId RealEstateIssue]
     lockedRealEstateIssues: [ContractId LockRealEstateIssue]
-    -- exchangeRates: [ContractId ExchangeRate]
+    exchangeRates: [ContractId ExchangeRate]
   where 
     signatory operator
     observer users
 
     controller operator can 
-      -- Operator_PublishRate: (
-      --     ContractId ExchangeRate,
-      --     ContractId Directory
-      --   )
-      --   with
-      --     baseCurr: Currency
-      --     quoteCurr: Currency
-      --     exchRate: Decimal
-      --     percMove: Decimal
-      --   do
-      --     rate <- create ExchangeRate with
-      --       provider = operator, baseCurr, quoteCurr, exchRate, percMove, ..
-      --     dir <- create this with
-      --       exchangeRates = rate :: exchangeRates
-      --     return (rate, dir)
+      Operator_PublishRate: (
+          ContractId ExchangeRate,
+          ContractId Directory
+        )
+        with
+          baseCurr: Currency
+          quoteCurr: Currency
+          exchRate: Decimal
+          percMove: Decimal
+        do
+          rate <- create ExchangeRate with
+            provider = operator, baseCurr, quoteCurr, exchRate, percMove, ..
+          dir <- create this with
+            exchangeRates = rate :: exchangeRates
+          return (rate, dir)
 
       Directory_UpdateIssueID: (
           ContractId Directory
@@ -63,16 +63,16 @@ template Directory
           --     exercise cid TokenUpdateNotice_AddInvestor with newUser = user
           --   ) lockedRealEstateIssues
             
-          -- updExchRates <- mapA (\cid -> 
-          --     exercise cid ExchangeRate_AddUser with user
-          --   ) exchangeRates
+          updExchRates <- mapA (\cid -> 
+              exercise cid ExchangeRate_AddUser with user
+            ) exchangeRates
 
           dir <- create this with 
             users = user :: users
             realEstateIssues = []
             lockedRealEstateIssues = []
             -- lockedRealEstateIssues = (lockToLock ++ unlockToLock)
-            -- exchangeRates = updExchRates
+            exchangeRates = updExchRates
 
           return ([], dir)
       
@@ -174,27 +174,40 @@ template User
           create RealEstateBuyinBid with 
             investor = user, issuer = to_.lister, ..
       
-      nonconsuming User_AcceptBuyinBid: (
+      User_AcceptBuyinBid: (
           ContractId ERC20,
           ContractId RealEstateIssue,
           ContractId RealEstateShareContract,
-          ContractId Directory
+          ContractId Directory,
+          ContractId User
         )
         with
           bid: ContractId RealEstateBuyinBid
           directory: ContractId Directory
         do
           bidDeref <- fetch bid
+          listingDeref <- fetch bidDeref.realEstateListing
+          dirDeref <- fetch directory
 
-          let currREIssue = bidDeref.realEstateListing
+          allrates <- mapA (\cid -> 
+              do
+                rate <- fetch cid
+                return (rate.quoteCurr, cid)
+            ) dirDeref.exchangeRates
+          
+          rate <- fetch (snd (head (filter (\t -> fst t == listingDeref.listing.currency) allrates)))
 
           (erc20Token, u1_realEstateListing_1, u2_Shares_1) <- 
             exercise bid RealEstateBuyinBid_AcceptBuyinBid
           
           newDir <- exercise directory Directory_UpdateIssueID with
-            oldIssueID = currREIssue, newIssueID = u1_realEstateListing_1
+            oldIssueID = bidDeref.realEstateListing, newIssueID = u1_realEstateListing_1
           
-          return (erc20Token, u1_realEstateListing_1, u2_Shares_1, newDir)
+          user <- create this with
+            etherBalance = etherBalance + 
+              ((listingDeref.listing.chunkFiatSizes * intToDecimal bidDeref.quantity) / rate.exchRate)
+          
+          return (erc20Token, u1_realEstateListing_1, u2_Shares_1, newDir, user)
 
       
 

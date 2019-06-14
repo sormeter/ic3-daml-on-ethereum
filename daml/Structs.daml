@@ -15,7 +15,7 @@ data RealEstateListing = RealEstateListing with
     fiatValueTotal: Decimal
     chunkFiatSizes: Decimal
     minChunks: Int
-    currency: Text
+    currency: Currency
   deriving (Eq, Show, Ord)
 
 
