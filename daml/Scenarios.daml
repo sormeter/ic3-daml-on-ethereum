@@ -67,7 +67,7 @@ scenarioTests = scenario do
 
 
 
-  (erc20Token, realEstateListing, directory) <- submit u1 do
+  (erc20Token, u1_realEstateListing_1, directory) <- submit u1 do
     exercise u1C User_ListNewOffering with
       directory, listing = u1Listing
 
@@ -101,12 +101,13 @@ scenarioTests = scenario do
 
 
 
-  -- u2BuyinBid_1 <- submit u2 do
-  --   exercise u2C User_BuyinToToken with
-  --     tokenOffer = u1TokenOffer, quantity = 200
+  u2BuyinBid_1 <- submit u2 do
+    exercise u2C User_BuyinToIssue with
+      realEstateListing = u1_realEstateListing_1, quantity = 2000
   
-  -- (u1TokenOffer, u1Shares1) <- submit u1 do
-  --   exercise u2BuyinBid_1 TokenBuyinBid_AcceptTokenBid
+  (erc20Token, u1_realEstateListing_1, u2_Shares_1, directory) <- submit u1 do
+    exercise u1C User_AcceptBuyinBid with
+      bid = u2BuyinBid_1, directory 
   
 
 

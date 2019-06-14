@@ -1,5 +1,5 @@
 daml 1.2 module Platform where
--- import DA.List
+import DA.List
 import Structs
 -- import ExchangeRates
 import RealEstateIssue
@@ -34,6 +34,16 @@ template Directory
       --       exchangeRates = rate :: exchangeRates
       --     return (rate, dir)
 
+      Directory_UpdateIssueID: (
+          ContractId Directory
+        )
+        with
+          oldIssueID: ContractId RealEstateIssue
+          newIssueID: ContractId RealEstateIssue
+        do
+          create this with
+            realEstateIssues = replace [oldIssueID] [newIssueID] realEstateIssues
+        
       Directory_AddUser: (
           [ContractId LockRealEstateIssue],
           ContractId Directory
@@ -89,6 +99,7 @@ template Directory
         assert (elem issuer users)
         create this with
           realEstateIssues = issue :: realEstateIssues
+    
 
 
 template UserJoinRequest
@@ -152,15 +163,39 @@ template User
 
           return (erc20Token, reList, dir)
 
-      -- nonconsuming User_BuyinToToken: (
-      --     ContractId TokenBuyinBid
-      --   )
-      --   with
-      --     tokenOffer: ContractId TokenIssue
-      --     quantity: Int
-      --   do
-      --     to_ <- fetch tokenOffer
-      --     create TokenBuyinBid with investor = user, issuer = to_.issuer, ..
+      nonconsuming User_BuyinToIssue: (
+          ContractId RealEstateBuyinBid
+        )
+        with
+          realEstateListing: ContractId RealEstateIssue
+          quantity: Int
+        do
+          to_ <- fetch realEstateListing
+          create RealEstateBuyinBid with 
+            investor = user, issuer = to_.lister, ..
+      
+      nonconsuming User_AcceptBuyinBid: (
+          ContractId ERC20,
+          ContractId RealEstateIssue,
+          ContractId RealEstateShareContract,
+          ContractId Directory
+        )
+        with
+          bid: ContractId RealEstateBuyinBid
+          directory: ContractId Directory
+        do
+          bidDeref <- fetch bid
+
+          let currREIssue = bidDeref.realEstateListing
+
+          (erc20Token, u1_realEstateListing_1, u2_Shares_1) <- 
+            exercise bid RealEstateBuyinBid_AcceptBuyinBid
+          
+          newDir <- exercise directory Directory_UpdateIssueID with
+            oldIssueID = currREIssue, newIssueID = u1_realEstateListing_1
+          
+          return (erc20Token, u1_realEstateListing_1, u2_Shares_1, newDir)
+
       
 
       -- nonconsuming User_UnlockToken: (
