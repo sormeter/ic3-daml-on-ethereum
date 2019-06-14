@@ -14,6 +14,9 @@
 ### Pre-req : Install Solidity compiler https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html
 `solc solidity/Queue.sol --bin --abi --optimize -o solidity/build/`
 
+Alternatively just generate wrappers by calling the Java class directly
+`org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum`
+
 ## java codegen for solidity smart contract
 ### Pre-req : Install web3j command line : https://docs.web3j.io/command_line.html
 `web3j solidity generate -b solidity/build/DamlTransactionQueue.bin -a solidity/build/DamlTransactionQueue.abi -o src/main/java -p com.daml.ethereum`
