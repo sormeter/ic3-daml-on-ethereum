@@ -42,7 +42,8 @@ lazy val root = (project in file("."))
       "com.daml.ledger" %% "participant-state" % sdkVersion,
       "com.daml.ledger" %% "participant-state-kvutils" % sdkVersion,
       "com.github.scopt" %% "scopt" % "4.0.0-RC2",
-      "com.micronautics" %% "web3j-scala" % "4.2.0"
+      "com.micronautics" %% "web3j-scala" % "4.2.0",
+      "org.web3j" %% "core<" % "4.2.0"
     ),
     resolvers ++= Seq(
       DefaultMavenRepository,
