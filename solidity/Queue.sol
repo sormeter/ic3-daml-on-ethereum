@@ -12,7 +12,7 @@ contract DamlTransactionQueue {
         REGISTRATION_FEE = regFee;
     }
 
-    function isRegistered(address addr) public returns (bool) {
+    function isRegistered(address addr) public view returns (bool) {
         for (uint i = 0; i < registeredAddrs.length; i++) {
             if (registeredAddrs[i] == addr) return true;
         }
@@ -20,7 +20,7 @@ contract DamlTransactionQueue {
     }
 
     function register() external payable {
-        if (msg.value != REGISTRATION_FEE || isRegistered(msg.sender)) revert();
+        if (msg.value != REGISTRATION_FEE || isRegistered(msg.sender)) revert("Insufficient registration fee or already registered");
 
         registeredAddrs.push(msg.sender);
     }
@@ -38,7 +38,7 @@ contract DamlTransactionQueue {
 
     // Submits a new DAML transaction request and returns the index of that request.
     function submit(bytes calldata damlTxn) external returns(uint) {
-        if (!isRegistered(msg.sender)) revert();
+        if (!isRegistered(msg.sender)) revert("Sender not registered");
 
         emit Request(txnRequests.length, damlTxn);
         return txnRequests.push(damlTxn) - 1;
