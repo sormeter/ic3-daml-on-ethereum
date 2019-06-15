@@ -129,7 +129,9 @@ ___
 
 ## Testing the DAML Workflows
 
-Starting DAML ledger (sandbox and navigator) for testing; this will load up the partial scenario wherein the three primary users + `ETH/USD` and `ETH/EUR` currency pairs have been registered
+Starting DAML ledger (sandbox and navigator) for testing; this will load up the partial scenario wherein the three primary users + `ETH/USD` and `ETH/EUR` currency pairs have been registered.
+
+From the top-level directory, run:
 
 ```
 daml start
