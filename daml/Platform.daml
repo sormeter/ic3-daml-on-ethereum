@@ -73,7 +73,7 @@ template Directory
             lockedRealEstateIssues = (lockToLock ++ unlockToLock)
             exchangeRates = updExchRates
 
-          return ([], dir)
+          return ((lockToLock ++ unlockToLock), dir)
       
       Directory_AddUpdatedRealEstateIssue: (
           ContractId Directory
