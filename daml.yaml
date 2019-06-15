@@ -5,8 +5,8 @@ source: daml/Main.daml
 # scenario: Main:mainScenario
 parties:
 - Operator
-# - Alice
-# - Bob
+- Alice
+- Bob
 exposed-modules:
 - Main
 dependencies:
