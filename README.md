@@ -41,13 +41,12 @@ ___
 
 Create a new account
 
-`geth --datadir network/node0 account new`
-
-`Passphrase:`
-
-`Repeat passphrase:`
-
-`Address: {eb49b0e5cc0a631054ee77a3edbbbba010dfb1ee}`
+```
+geth --datadir network/node0 account new
+Passphrase:
+Repeat passphrase:`
+Address: {eb49b0e5cc0a631054ee77a3edbbbba010dfb1ee}
+```
 
 List accounts
 
@@ -128,29 +127,49 @@ Get the payload itself
 
 ___
 
-## DAML Stufff
+## Testing the DAML Workflows
 
-Starting DAML ledger (sandbox and navigator)
+Starting DAML ledger (sandbox and navigator) for testing; this will load up the partial scenario wherein the three primary users + `ETH/USD` and `ETH/EUR` currency pairs have been registered
 
-`daml start`
+```
+daml start
+```
+
+This will also spin up a Navigator instance that can be used to drive the workflows forward.
+
+___
+
+## Other DAML stuff
 
 Start navigator only
-`daml navigator`
+
+```
+daml navigator
+```
 
 Subscribe to grpc service -- ledgerId will be dynamic for your instance and when you first subscribe
 Pre-req : Install grpcurl via brew or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
 
-`grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees`
+```
+grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees
+```
 
-bin and abi for solidity smart contract
+`BIN`s and `ABI`s for solidity smart contract
 Pre-req : [Install Solidity compiler](https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html)
 
-`solc solidity/Queue.sol --bin --abi --optimize -o solidity/build/`
+```
+solc solidity/Queue.sol --bin --abi --optimize -o solidity/build/
+```
 
 Alternatively just generate wrappers by calling the Java class directly
-`org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum`
 
-java codegen for solidity smart contract
+```
+org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum
+```
+
+Java codegen for solidity smart contract
 Pre-req : [Install web3j command line](https://docs.web3j.io/command_line.html)
 
-`web3j solidity generate -b solidity/build/DamlTransactionQueue.bin -a solidity/build/DamlTransactionQueue.abi -o src/main/java -p com.daml.ethereum`
+```
+web3j solidity generate -b solidity/build/DamlTransactionQueue.bin -a solidity/build/DamlTransactionQueue.abi -o src/main/java -p com.daml.ethereum
+```
