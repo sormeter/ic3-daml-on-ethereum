@@ -7,23 +7,30 @@ dist-dir	:=	dist
 
 
 # Ethereum bits
-ethereum-setup-node:
-	mkdir -pv $(network-dir)
-	geth init genesis.json --datadir $(network-dir)/node0
-	geth --datadir $(network-dir)/node0 account new
+ethereum-setup-nodes:
+	@mkdir -pv $(network-dir)
+	@echo "password" > $(password-file)
+	@for node in $(shell seq 0 3) ; do \
+		geth init genesis.json --datadir $(network-dir)/node$${node} ; \
+		geth --datadir $(network-dir)/node$${node} account new --password $(password-file) ; \
+	done
 
-ethereum-start-node:
-	geth --datadir $(network-dir)/node0 --networkid 2019061016 \
-		--port 30303 --rpc --rpcapi 'db,personal,eth,net,web3,debug' \
-		--rpccorsdomain='*' --rpcaddr='localhost' --rpcport 8545 \
-		--mine --miner.threads $(miner-threads) --ipcpath $(network-dir)/node0/geth.ipc \
-		2>  $(network-dir)/node0.log
-		
-ethereum-stop-node:
+ethereum-run-network:
+	@for node in $(shell seq 0 3) ; do \
+		bash -c "trap 'trap - SIGINT SIGTERM ERR; echo Shutdown.; exit 0' SIGINT SIGTERM ERR; \
+			geth --datadir $(network-dir)/node$${node} --networkid 2019061016 \
+				--port 3030$${node} --miner.threads 1 --rpc --rpcapi 'db,personal,eth,net,web3,debug' \
+				--rpccorsdomain='*' --rpcaddr='localhost' --rpcport 854$${node} \
+				--mine --miner.threads $(miner-threads) --ipcpath network/node$${node}/geth.ipc \
+				--unlock 0x$$(cat $(network-dir)/node$${node}/keystore/UTC-* | head -n1 | jq '.address' | sed -e 's/"//g') \
+				--password $(password-file) 2> $(network-dir)/node$${node}.log &" ; \
+	done
+
+ethereum-stop-network:
 	kill -INT $(shell ps -auf | grep [g]eth | grep 2019061016 | awk '{print $$2}')
 
 ethereum-connect-client:
-	geth attach --datadir $(network-dir)/node0
+	geth attach --datadir $(network-dir)/node$(node)
 
 ethereum-cleanup:
 	rm -rfv $(network-dir)

@@ -1,19 +1,29 @@
 # ic3-daml-on-ethereum
 
-ic3-daml-on-ethereum
+Cornell IC3 hackathon implementing an integrated DAML runtim on an Ethereum private network.
 
 ## Ethereum stuff (`Makefile` included) - in order
-Setup Ethereum node
+Setup an Ethereum private network with (hard-coded) 4 nodes
 
-`make ethereum-setup-node`
+`make ethereum-setup-nodes`
 
-Run Ethereum node and start mining
+Run all Ethereum nodes, unlock Etherbase account, and start mining
 
-`make ethereum-start-node`
+`make ethereum-run-network`
 
 Connect to the JS console
 
-`make ethereum-connect-console`
+`make ethereum-connect-client node=NODE`
+
+where `NODE` is {0..3}
+
+Stop everything
+
+`make ethereum-stop-network`
+
+Clean up the Ethereum network, deleting all keys, files, DB, etc.
+
+`make ethereum-cleanup`
 
 ___
 
@@ -21,12 +31,13 @@ ___
 
 Create a new account
 
-`geth --datadir network/node0 account new
-INFO [06-14|20:36:09.956] Maximum peer count                       ETH=25 LES=0 total=25
-Your new account is locked with a password. Please give a password. Do not forget this password.
-Passphrase: 
-Repeat passphrase: 
-Address: {eb49b0e5cc0a631054ee77a3edbbbba010dfb1ee}`
+`geth --datadir network/node0 account new`
+
+`Passphrase:`
+
+`Repeat passphrase:`
+
+`Address: {eb49b0e5cc0a631054ee77a3edbbbba010dfb1ee}`
 
 List accounts
 
