@@ -1,5 +1,19 @@
 # Useful commands
 
+## Ethereum stuff (`Makefile` included) - in order
+Setup Ethereum node
+
+`make ethereum-setup-node`
+
+Run Ethereum node and start mining
+
+`make ethereum-start-node`
+
+Connect to the JS console
+
+`make ethereum-connect-console`
+
+
 ## Starting DAML ledger (sandbox and navigator)
 `daml start`
 
