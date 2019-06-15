@@ -1,6 +1,6 @@
 # ic3-daml-on-ethereum
 
-Cornell IC3 hackathon implementing an integrated DAML runtim on an Ethereum private network.
+Cornell IC3 bootcamp implementing an integrated DAML runtime on an Ethereum private network.
 
 ## Ethereum stuff (`Makefile` included) - in order
 
@@ -128,29 +128,63 @@ Get the payload itself
 
 ___
 
-## DAML Stufff
+## DAML setup
+
+### Compile and build
+
+`make compile`
+
+
+
+
+### Running
 
 Starting DAML ledger (sandbox and navigator)
 
 `daml start`
 
-Start navigator only
-`daml navigator`
+start-up the Ethereum adapter (publisher & reader)
 
-Subscribe to grpc service -- ledgerId will be dynamic for your instance and when you first subscribe
-Pre-req : Install grpcurl via brew or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
 
-`grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees`
+`make start-ethereum-adapter` (TODO add the target in Makefile)
+
+
+### Demo
+
+Open navigator at http://localhost:7500/
+
+
+Choose your role: Operator
+Click on Templates
+
+
+### Extra: Rebuilding when Solidity contract is changed
+
+
+Step 1
 
 bin and abi for solidity smart contract
 Pre-req : [Install Solidity compiler](https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html)
 
 `solc solidity/Queue.sol --bin --abi --optimize -o solidity/build/`
 
-Alternatively just generate wrappers by calling the Java class directly
-`org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum`
+
+Step 2
+
+Two ways.
 
 java codegen for solidity smart contract
 Pre-req : [Install web3j command line](https://docs.web3j.io/command_line.html)
 
 `web3j solidity generate -b solidity/build/DamlTransactionQueue.bin -a solidity/build/DamlTransactionQueue.abi -o src/main/java -p com.daml.ethereum`
+
+Alternatively just generate wrappers by calling the Java class directly
+`org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum`
+
+
+### Miscellaneous Utilities
+
+Subscribe to grpc service -- ledgerId will be dynamic for your instance and when you first subscribe
+Pre-req : Install grpcurl via brew or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
+
+`grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees`
