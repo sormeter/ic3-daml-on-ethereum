@@ -3,6 +3,7 @@
 Cornell IC3 hackathon implementing an integrated DAML runtim on an Ethereum private network.
 
 ## Ethereum stuff (`Makefile` included) - in order
+
 Setup an Ethereum private network with (hard-coded) 4 nodes
 
 `make ethereum-setup-nodes`
@@ -24,6 +25,15 @@ Stop everything
 Clean up the Ethereum network, deleting all keys, files, DB, etc.
 
 `make ethereum-cleanup`
+
+Networking side of things:
+
+| Node | RPC Port | Listening port |
+| --- | --- | --- |
+| Node0 | 8450 | 30300 |
+| Node1 | 8451 | 30301 |
+| Node2 | 8452 | 30302 |
+| Node3 | 8453 | 30303 |
 
 ___
 
@@ -94,7 +104,7 @@ Unpack the transaction
 
 Get the hash of the payload
 
-`> eth.getTransaction("0xb8829f15b4d83e0c989c9f14e8b1bae282d25f9439464a0edfaf1e28876a0685").input 
+`> eth.getTransaction("0xb8829f15b4d83e0c989c9f14e8b1bae282d25f9439464a0edfaf1e28876a0685").input
 "0x66756b6e207061796c6f6164"`
 
 Get the payload itself
@@ -114,12 +124,12 @@ Start navigator only
 `daml navigator`
 
 Subscribe to grpc service -- ledgerId will be dynamic for your instance and when you first subscribe
-Pre-req : Install grpcurl via brew or apt-get or download relevant OS version from here https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0
+Pre-req : Install grpcurl via brew or apt-get or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
 
 `grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees`
 
 bin and abi for solidity smart contract
-Pre-req : Install Solidity compiler https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html
+Pre-req : [Install Solidity compiler](https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html)
 
 `solc solidity/Queue.sol --bin --abi --optimize -o solidity/build/`
 
@@ -127,6 +137,6 @@ Alternatively just generate wrappers by calling the Java class directly
 `org.web3j.codegen.SolidityFunctionWrapperGenerator -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o src/main/java -p com.daml.ethereum`
 
 java codegen for solidity smart contract
-Pre-req : Install web3j command line : https://docs.web3j.io/command_line.html
+Pre-req : [Install web3j command line](https://docs.web3j.io/command_line.html)
 
 `web3j solidity generate -b solidity/build/DamlTransactionQueue.bin -a solidity/build/DamlTransactionQueue.abi -o src/main/java -p com.daml.ethereum`
