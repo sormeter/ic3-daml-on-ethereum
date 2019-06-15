@@ -51,22 +51,29 @@ Create a new account
 
 List accounts
 
-`> eth.accounts
-["0x887395b8a879cf538fbbb2236e28e8d2b12288f9", "0xeb49b0e5cc0a631054ee77a3edbbbba010dfb1ee"]`
+```
+> eth.accounts
+["0x887395b8a879cf538fbbb2236e28e8d2b12288f9", "0xeb49b0e5cc0a631054ee77a3edbbbba010dfb1ee"]
+```
 
 Send Ether from accounts[0] -> accounts[1]
 
-`> eth.sendTransaction({from: eth.accounts[0], to: eth.accounts[1], value: web3.toWei(1000, "ether")})
-"0x045a60b37a084594dac7faa6432b6a92e8235d62b1850af39ad98cfcb59f3799"`
+```
+> eth.sendTransaction({from: eth.accounts[0], to: eth.accounts[1], value: web3.toWei(1000, "ether")})
+"0x045a60b37a084594dac7faa6432b6a92e8235d62b1850af39ad98cfcb59f3799"
+```
 
 Send Ether and Payload from accounts[0] -> accounts[1]
 
-`> eth.sendTransaction({from: eth.accounts[0], to: eth.accounts[1], value: web3.toWei(10, "ether"), data: web3.toHex("you go to jail, bad boy!!")})
-"0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff"`
+```
+> eth.sendTransaction({from: eth.accounts[0], to: eth.accounts[1], value: web3.toWei(10, "ether"), data: web3.toHex("you go to jail, bad boy!!")})
+"0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff"
+```
 
 Get receipt for the transaction
 
-`> eth.getTransactionReceipt("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff")
+```
+> eth.getTransactionReceipt("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff")
 {
   blockHash: "0x4972c60f8d6b46d9371f75aa067f7400121d04a40217efbb762ec4cfe8345b73",
   blockNumber: 4500,
@@ -80,11 +87,13 @@ Get receipt for the transaction
   to: "0xeb49b0e5cc0a631054ee77a3edbbbba010dfb1ee",
   transactionHash: "0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff",
   transactionIndex: 0
-}`
+}
+```
 
 Unpack the transaction
 
-`> eth.getTransaction("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff")
+```
+> eth.getTransaction("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff")
 {
   blockHash: "0x4972c60f8d6b46d9371f75aa067f7400121d04a40217efbb762ec4cfe8345b73",
   blockNumber: 4500,
@@ -100,17 +109,22 @@ Unpack the transaction
   transactionIndex: 0,
   v: "0xf0b0da54",
   value: 10000000000000000000
-}`
+}
+```
 
 Get the hash of the payload
 
-`> eth.getTransaction("0xb8829f15b4d83e0c989c9f14e8b1bae282d25f9439464a0edfaf1e28876a0685").input
-"0x66756b6e207061796c6f6164"`
+```
+> eth.getTransaction("0xb8829f15b4d83e0c989c9f14e8b1bae282d25f9439464a0edfaf1e28876a0685").input
+"0x66756b6e207061796c6f6164"
+```
 
 Get the payload itself
 
-`> web3.toAscii(eth.getTransaction("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff").input)
-"you go to jail, bad boy!!"`
+```
+> web3.toAscii(eth.getTransaction("0xe73fcf1961709cfd77e48704ab8a33dc31e6ddccf4b7ba0d681ab39cf12974ff").input)
+"you go to jail, bad boy!!"
+```
 
 ___
 
@@ -124,7 +138,7 @@ Start navigator only
 `daml navigator`
 
 Subscribe to grpc service -- ledgerId will be dynamic for your instance and when you first subscribe
-Pre-req : Install grpcurl via brew or apt-get or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
+Pre-req : Install grpcurl via brew or download relevant OS version from [here](https://github.com/fullstorydev/grpcurl/releases/tag/v1.3.0)
 
 `grpcurl -import-path . -plaintext -d '{"ledgerId" : "sandbox-ad95d846-56d4-4747-82b3-ad6625e515ca", "filter": {"filtersByParty":{"Operator":{}}}, "begin": {"boundary":0 } }' localhost:6865 com.digitalasset.ledger.api.v1.TransactionService.GetTransactionTrees`
 
