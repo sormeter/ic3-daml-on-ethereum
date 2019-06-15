@@ -18,7 +18,6 @@ data RealEstateListing = RealEstateListing with
     currency: Currency
   deriving (Eq, Show, Ord)
 
-
 data ListingType
     = REAL_ESTATE (RealEstateListing)
   deriving (Eq, Show, Ord)

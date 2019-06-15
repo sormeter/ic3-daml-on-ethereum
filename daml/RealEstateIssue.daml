@@ -26,14 +26,22 @@ template RealEstateIssue
             erc20 = newERC20
       
       RealEstateIssue_AddInvestors: (
+          ContractId ERC20,
           ContractId RealEstateIssue
         )
         with
           newInvestors: [Party]
         do
-          create this with
+          updERC20 <- exercise erc20 UpdateObservers with
+            newUsers = newInvestors
+            caller = lister
+
+          newRE <- create this with
             investors = newInvestors ++ investors
+            erc20 = updERC20
             locked = False
+          
+          return (updERC20, newRE)
 
     controller operator can
       RealEstateIssue_LockIssue: (
@@ -55,11 +63,14 @@ template LockRealEstateIssue
 
     controller issuer can
       LockRealEstateIssue_Unlock: (
+          ContractId ERC20,
           ContractId RealEstateIssue
         )
         do
-          exercise issue RealEstateIssue_AddInvestors with
+          (updERC20, updREI) <- exercise issue RealEstateIssue_AddInvestors with
             newInvestors = newUsers
+          
+          return (updERC20, updREI)
     
     controller operator can
       LockRealEstateIssue_AddInvestor: (

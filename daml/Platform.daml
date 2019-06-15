@@ -250,6 +250,7 @@ template User
             viewers = []
 
       nonconsuming User_UnlockRealEstateIssue: (
+          ContractId ERC20,
           ContractId RealEstateIssue,
           ContractId Directory
         )
@@ -257,10 +258,10 @@ template User
           directory: ContractId Directory
           notice: ContractId LockRealEstateIssue
         do
-          newIssue <- exercise notice LockRealEstateIssue_Unlock
+          (newERC20, newIssue) <- exercise notice LockRealEstateIssue_Unlock
           dir <- exercise directory Directory_AddUpdatedRealEstateIssue with
             updatedIssue = newIssue, notice
-          return (newIssue, dir)
+          return (newERC20, newIssue, dir)
         
 
 template FundsTransferPermission

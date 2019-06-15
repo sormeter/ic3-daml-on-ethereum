@@ -79,7 +79,7 @@ scenarioTests = scenario do
   (u4C, directory, notices) <- submit op do
     exercise u4JoinReq UserJoinRequest_Grant with directory
 
-  (u1TokenOffer, directory) <- submit u1 do
+  (u1_erc20Token, u1TokenOffer, directory) <- submit u1 do
     exercise u1C User_UnlockRealEstateIssue with 
       directory, notice = (notices !! 0)
 
@@ -89,7 +89,7 @@ scenarioTests = scenario do
   (u5C, directory, notices) <- submit op do
     exercise u5JoinReq UserJoinRequest_Grant with directory
 
-  (u1TokenOffer, directory) <- submit u1 do
+  (u1_erc20Token, u1TokenOffer, directory) <- submit u1 do
     exercise u1C User_UnlockRealEstateIssue with 
       directory, notice = (notices !! 0)
 

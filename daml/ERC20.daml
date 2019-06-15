@@ -157,6 +157,15 @@ template ERC20
         do
           create this with
             users = newUser :: users
+    
+    choice UpdateObservers : ContractId ERC20
+      with
+        caller : Party
+        newUsers : [Party]
+      controller caller
+        do
+          create this with
+            users = newUsers ++ users
 
     -- choice Issue : ContractId ERC20
     --   with
