@@ -1,0 +1,96 @@
+daml 1.2 module ScenariosFull where
+import DA.List
+import Structs
+import Platform
+
+
+scenarioTestsFull = scenario do
+  op <- getParty "0xOPERATOR"
+  u1 <- getParty "0x11111111"
+  u2 <- getParty "0x22222222"
+  u3 <- getParty "0x33333333"
+  u4 <- getParty "0x44444444"
+  u5 <- getParty "0x55555555"
+
+  let
+    u1Listing = RealEstateListing with
+      issueName = "THIRTEEN EAST + WEST"
+      issueSymbol = "13EW"
+      location = "New York"
+      fiatValueTotal = 25000000.0
+      chunkFiatSizes = 100.0
+      minChunks = 1
+      currency = USD
+
+    u2Listing = RealEstateListing with
+      issueName = "VILLA QUARDA"
+      issueSymbol = "VQRD"
+      location = "Argostoli"
+      fiatValueTotal = 20000000.0
+      chunkFiatSizes = 10000.0
+      minChunks = 1
+      currency = EUR
+
+  directory <- submit op do
+    create Directory with 
+      operator = op,  users = [], realEstateIssues = [], lockedRealEstateIssues = [], exchangeRates = []
+  
+  (rateETH_USD, directory) <- submit op do 
+    exercise directory Operator_PublishRate with
+      baseCurr = ETH, quoteCurr = USD, exchRate = 243.99, percMove = -2.99
+
+  (rateETH_EUR, directory) <- submit op do 
+    exercise directory Operator_PublishRate with
+      baseCurr = ETH, quoteCurr = EUR, exchRate = 214.97, percMove = -2.53
+  
+  u1JoinReq <- submit u1 do
+    create UserJoinRequest with operator = op, user = u1, etherBalance = 800.0, ..
+
+  (u1C, directory, notices) <- submit op do
+    exercise u1JoinReq UserJoinRequest_Grant with directory
+
+  u2JoinReq <- submit u2 do
+    create UserJoinRequest with operator = op, user = u2, etherBalance = 2300.0, ..
+
+  (u2C, directory, notices) <- submit op do
+    exercise u2JoinReq UserJoinRequest_Grant with directory
+
+  u3JoinReq <- submit u3 do
+    create UserJoinRequest with operator = op, user = u3, etherBalance = 600.0, ..
+
+  (u3C, directory, notices) <- submit op do
+    exercise u3JoinReq UserJoinRequest_Grant with directory
+
+  (u1_erc20Token, u1_realEstateListing_1, directory) <- submit u1 do
+    exercise u1C User_ListNewOffering with
+      directory, listing = u1Listing
+
+  (u2BuyinBid_1, u2_TransferFunds_u1) <- submit u2 do
+    exercise u2C User_BuyinToIssue with
+      realEstateListing = u1_realEstateListing_1, quantity = 2000, selfContract = u2C
+
+  (u1_erc20Token, u1_realEstateListing_1, u2_Shares_1, directory, u1C) <- submit u1 do
+    exercise u1C User_AcceptBuyinBid with
+      bid = u2BuyinBid_1, directory, fundsTransferPermission = u2_TransferFunds_u1
+  
+  u4JoinReq <- submit u4 do
+    create UserJoinRequest with operator = op, user = u4, etherBalance = 12300.0, ..
+
+  (u4C, directory, notices) <- submit op do
+    exercise u4JoinReq UserJoinRequest_Grant with directory
+
+  (u1_erc20Token, u1TokenOffer, directory) <- submit u1 do
+    exercise u1C User_UnlockRealEstateIssue with 
+      directory, notice = (notices !! 0)
+
+  u5JoinReq <- submit u5 do
+    create UserJoinRequest with operator = op, user = u5, etherBalance = 50.0, ..
+
+  (u5C, directory, notices) <- submit op do
+    exercise u5JoinReq UserJoinRequest_Grant with directory
+
+  (u1_erc20Token, u1TokenOffer, directory) <- submit u1 do
+    exercise u1C User_UnlockRealEstateIssue with 
+      directory, notice = (notices !! 0)
+
+  return ()
