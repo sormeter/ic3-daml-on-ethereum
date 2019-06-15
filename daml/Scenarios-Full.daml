@@ -4,7 +4,7 @@ import Structs
 import Platform
 
 
-scenarioTests = scenario do
+scenarioTestsFull = scenario do
   op <- getParty "0xOPERATOR"
   u1 <- getParty "0x11111111"
   u2 <- getParty "0x22222222"
