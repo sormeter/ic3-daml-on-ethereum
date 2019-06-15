@@ -27,12 +27,3 @@ template ExchangeRate
         do
           create this with
             users = user :: users
-          
-      -- ExchangeRate_PublishRate: (
-      --     ContractId ExchangeRate
-      --   )
-      --   with
-      --     newExchRate: Decimal
-      --   do
-      --     create this with
-      --       exchRate = newExchRate

@@ -51,17 +51,17 @@ template Directory
         with
           user: Party
         do
-          -- unlockToLock <- mapA (\cid -> 
-          --     do
-          --       lock <- exercise cid TokenIssue_LockToken
-          --       cid_ <- fetch lock
-          --       create LockRealEstateIssue with 
-          --         issuer = cid_.creator, operator, token = lock, newUsers = [user] 
-          --   ) realEstateIssues
+          unlockToLock <- mapA (\cid -> 
+              do
+                lock <- exercise cid RealEstateIssue_LockIssue
+                cid_ <- fetch lock
+                create LockRealEstateIssue with 
+                  issuer = cid_.lister, operator, issue = lock, newUsers = [user] 
+            ) realEstateIssues
 
-          -- lockToLock <- mapA (\cid -> 
-          --     exercise cid TokenUpdateNotice_AddInvestor with newUser = user
-          --   ) lockedRealEstateIssues
+          lockToLock <- mapA (\cid -> 
+              exercise cid LockRealEstateIssue_AddInvestor with newUser = user
+            ) lockedRealEstateIssues
             
           updExchRates <- mapA (\cid -> 
               exercise cid ExchangeRate_AddUser with user
@@ -70,23 +70,23 @@ template Directory
           dir <- create this with 
             users = user :: users
             realEstateIssues = []
-            lockedRealEstateIssues = []
-            -- lockedRealEstateIssues = (lockToLock ++ unlockToLock)
+            lockedRealEstateIssues = (lockToLock ++ unlockToLock)
             exchangeRates = updExchRates
 
           return ([], dir)
       
-    --   Directory_AddUpdatedTokenIssue: (
-    --       ContractId Directory
-    --     )
-    --     with
-    --       updatedTokenIssue: ContractId TokenIssue
-    --       notice: ContractId LockRealEstateIssue
-    --     do
-    --       let
-    --         updLockedTokenIssues = delete notice lockedRealEstateIssues
-    --       create this with
-    --         realEstateIssues = updatedTokenIssue :: realEstateIssues; lockedRealEstateIssues = updLockedTokenIssues
+      Directory_AddUpdatedRealEstateIssue: (
+          ContractId Directory
+        )
+        with
+          updatedIssue: ContractId RealEstateIssue
+          notice: ContractId LockRealEstateIssue
+        do
+          let
+            updLockedIssues = delete notice lockedRealEstateIssues
+          create this with
+            realEstateIssues = updatedIssue :: realEstateIssues
+            lockedRealEstateIssues = updLockedIssues
       
     choice Directory_AddRealEstateIssue: (
         ContractId Directory
@@ -100,7 +100,6 @@ template Directory
         create this with
           realEstateIssues = issue :: realEstateIssues
     
-
 
 template UserJoinRequest
   with
@@ -121,7 +120,7 @@ template UserJoinRequest
         do
           dir_ <- fetch directory
           assert (notElem user dir_.users)
-          newUser <- create User with ..
+          newUser <- create User with viewers = [], ..
           (unlockToLock, updDir) <- exercise directory Directory_AddUser with ..
           return (newUser, updDir, unlockToLock)
 
@@ -131,10 +130,21 @@ template User
     user: Party
     operator: Party
     etherBalance: Decimal
+    viewers: [Party]
   where
     signatory user, operator
+    observer viewers
 
     controller user can
+      User_AddObserver: (
+          ContractId User
+        )
+        with
+          viewer: Party
+        do
+          create this with
+            viewers = viewer :: viewers
+
       nonconsuming User_ListNewOffering: (
           ContractId ERC20,
           ContractId RealEstateIssue,
@@ -156,7 +166,11 @@ template User
               allowances = []
           
           reList <- create RealEstateIssue with
-            lister = user, investors = dir_.users, erc20 = erc20Token, ..
+            lister = user
+            investors = dir_.users
+            erc20 = erc20Token
+            locked = False
+            ..
             
           dir <- exercise directory Directory_AddRealEstateIssue with 
             issuer = user, issue = reList
@@ -164,15 +178,26 @@ template User
           return (erc20Token, reList, dir)
 
       nonconsuming User_BuyinToIssue: (
-          ContractId RealEstateBuyinBid
+          ContractId RealEstateBuyinBid,
+          ContractId FundsTransferPermission
         )
         with
           realEstateListing: ContractId RealEstateIssue
           quantity: Int
+          selfContract: ContractId User
         do
           to_ <- fetch realEstateListing
-          create RealEstateBuyinBid with 
+
+          newBid <- create RealEstateBuyinBid with 
             investor = user, issuer = to_.lister, ..
+          
+          selfContract <- exercise selfContract User_AddObserver with
+            viewer = to_.lister
+          
+          transAuth <- create FundsTransferPermission with
+            sender = user, receiver = to_.lister, ..
+          
+          return (newBid, transAuth)
       
       User_AcceptBuyinBid: (
           ContractId ERC20,
@@ -184,6 +209,7 @@ template User
         with
           bid: ContractId RealEstateBuyinBid
           directory: ContractId Directory
+          fundsTransferPermission: ContractId FundsTransferPermission
         do
           bidDeref <- fetch bid
           listingDeref <- fetch bidDeref.realEstateListing
@@ -203,24 +229,53 @@ template User
           newDir <- exercise directory Directory_UpdateIssueID with
             oldIssueID = bidDeref.realEstateListing, newIssueID = u1_realEstateListing_1
           
-          user <- create this with
-            etherBalance = etherBalance + 
-              ((listingDeref.listing.chunkFiatSizes * intToDecimal bidDeref.quantity) / rate.exchRate)
+          let delta = ((listingDeref.listing.chunkFiatSizes * intToDecimal bidDeref.quantity) / rate.exchRate)
+
+          seller <- create this with
+            etherBalance = etherBalance + delta
           
-          return (erc20Token, u1_realEstateListing_1, u2_Shares_1, newDir, user)
+          buyer <- exercise fundsTransferPermission FundsTransferPermission_SetNewBalance with
+            newBalance = delta
+          
+          return (erc20Token, u1_realEstateListing_1, u2_Shares_1, newDir, seller)
+    
+      User_UpdateBalance: (
+          ContractId User
+        )
+        with
+          newBalance: Decimal
+        do
+          create this with
+            etherBalance = newBalance
+            viewers = []
 
-      
-
-      -- nonconsuming User_UnlockToken: (
-      --     ContractId TokenIssue,
-      --     ContractId Directory
-      --   )
-      --   with
-      --     directory: ContractId Directory
-      --     notice: ContractId LockRealEstateIssue
-      --   do
-      --     newTokenIssue <- exercise notice TokenUpdateNotice_Unlock
-      --     dir <- exercise directory Directory_AddUpdatedTokenIssue with
-      --       updatedTokenIssue = newTokenIssue, notice
-      --     return (newTokenIssue, dir)
+      nonconsuming User_UnlockRealEstateIssue: (
+          ContractId RealEstateIssue,
+          ContractId Directory
+        )
+        with
+          directory: ContractId Directory
+          notice: ContractId LockRealEstateIssue
+        do
+          newIssue <- exercise notice LockRealEstateIssue_Unlock
+          dir <- exercise directory Directory_AddUpdatedRealEstateIssue with
+            updatedIssue = newIssue, notice
+          return (newIssue, dir)
         
+
+template FundsTransferPermission
+  with
+    sender: Party
+    receiver: Party
+    selfContract: ContractId User
+  where
+    signatory sender
+
+    controller receiver can
+      FundsTransferPermission_SetNewBalance: (
+          ContractId User
+        )
+        with
+          newBalance: Decimal
+        do
+          exercise selfContract User_UpdateBalance with ..

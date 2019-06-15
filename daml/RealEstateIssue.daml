@@ -10,6 +10,7 @@ template RealEstateIssue
     investors: [Party]
     listing: RealEstateListing
     erc20: ContractId ERC20
+    locked: Bool
   where
     signatory lister
     observer investors
@@ -23,34 +24,52 @@ template RealEstateIssue
         do
           create this with
             erc20 = newERC20
+      
+      RealEstateIssue_AddInvestors: (
+          ContractId RealEstateIssue
+        )
+        with
+          newInvestors: [Party]
+        do
+          create this with
+            investors = newInvestors ++ investors
+            locked = False
+
+    controller operator can
+      RealEstateIssue_LockIssue: (
+          ContractId RealEstateIssue
+        )
+        do
+          create this with
+            locked = True
     
 
 template LockRealEstateIssue
   with
     issuer: Party
     operator: Party
-    token: ContractId ERC20
+    issue: ContractId RealEstateIssue
     newUsers: [Party]
   where
     signatory operator
 
---     controller issuer can
---     --   TokenUpdateNotice_Unlock: (
---     --       ContractId ERC20
---     --     )
---     --     do
---     --       exercise token TokenIssue_AddInvestors with
---     --         newInvestors = newUsers
+    controller issuer can
+      LockRealEstateIssue_Unlock: (
+          ContractId RealEstateIssue
+        )
+        do
+          exercise issue RealEstateIssue_AddInvestors with
+            newInvestors = newUsers
     
---     controller operator can
---       TokenUpdateNotice_AddInvestor: (
---           ContractId LockRealEstateIssue
---         )
---         with
---           newUser: Party
---         do
---           create this with
---             newUsers = newUser :: newUsers
+    controller operator can
+      LockRealEstateIssue_AddInvestor: (
+          ContractId LockRealEstateIssue
+        )
+        with
+          newUser: Party
+        do
+          create this with
+            newUsers = newUser :: newUsers
 
 
 template RealEstateBuyinBid
