@@ -5,8 +5,7 @@ contract DamlTransactionQueue {
 
     uint REGISTRATION_FEE;
 
-    mapping(bytes => bool) txnRequests;
-    uint txnRequestsCounter;
+    bytes[] txnRequests;
     mapping(address => bool) registeredAddrs;
 
     constructor(uint regFee) public {
@@ -14,21 +13,24 @@ contract DamlTransactionQueue {
     }
 
     function register() external payable {
-        if (msg.value != REGISTRATION_FEE || !registeredAddrs[msg.sender]) revert("Insufficient registration fee or already registered");
+        if (msg.value != REGISTRATION_FEE || !registeredAddrs[msg.sender]) revert("Incorrect registration fee or already registered");
         registeredAddrs[msg.sender] = true;
     }
 
     function deregister() external {
-        registeredAddrs[msg.sender] = false;
-        msg.sender.transfer(REGISTRATION_FEE);
+        if (registeredAddres[msg.sender]) {
+            registeredAddrs[msg.sender] = false;
+            msg.sender.transfer(REGISTRATION_FEE);
+        }
     }
 
     // Submits a new DAML transaction request and returns the index of that request.
     function submit(bytes calldata damlTxn) external returns(uint) {
         if (!registeredAddrs[msg.sender]) revert("Sender not registered");
 
-        emit Request(txnRequestsCounter, damlTxn);
-        txnRequests[damlTxn] = true;
-        return ++txnRequestsCounter;
+        uint index = txnRequests.length;
+        emit Request(index, damlTxn);
+        txnRequests.push(damlTxn);
+        return index;
     }
 }
