@@ -3,6 +3,7 @@ network-file	:=	$(network-dir)/network.name
 password-file	:=	$(network-dir)/password
 miner-threads	:=	1
 ledger-srv-port	:=	6865
+test-nav-port	:=	7500
 dist-dir	:=	dist
 
 
@@ -62,3 +63,13 @@ package:
 
 it: package
 	bash ./it.sh
+
+
+# DAML Test layer
+daml-test-build:	ledger-dar-build
+
+daml-test-sandbox:
+	daml sandbox -w --eager-package-loading $(dist-dir)/$(shell grep name ./daml.yaml | awk '{print $$2}').dar
+
+daml-test-navigator:
+	daml navigator server --time wallclock --port $(test-nav-port)
