@@ -41,6 +41,9 @@ lazy val root = (project in file("."))
       "com.daml.ledger" %% "reference-participant-state-index" % sdkVersion,
       "com.daml.ledger" %% "participant-state" % sdkVersion,
       "com.daml.ledger" %% "participant-state-kvutils" % sdkVersion,
+      "com.daml.ledger" % "bindings-rxjava" % sdkVersion exclude ("com.google.protobuf","protobuf-lite"),
+      "com.daml.scala" %% "bindings" % sdkVersion,
+      "com.daml.scala" %% "bindings-akka" % sdkVersion,
       "com.github.scopt" %% "scopt" % "4.0.0-RC2",
       "com.micronautics" %% "web3j-scala" % "4.2.0",
       "org.web3j" % "core" % "4.2.0"
