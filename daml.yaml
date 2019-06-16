@@ -4,9 +4,9 @@ version: 1.0.0
 source: daml/ScenariosSetup.daml
 scenario: ScenariosSetup:scenarioTestsSetup
 parties:
-- "01a597e17e11a79df160262ea708d5f350f53af1"
-- "2f3008539c82213f882225fa81192248aeb6c192"
-- "20629e3ff0d1ed42ece207dd00f702adfd9a72b1"
+- "Operator-01a597e17e11a79df160262ea708d5f350f53af1"
+- "Alice-2f3008539c82213f882225fa81192248aeb6c192"
+- "Bob-20629e3ff0d1ed42ece207dd00f702adfd9a72b1"
 exposed-modules:
 - ScenariosSetup
 dependencies:
