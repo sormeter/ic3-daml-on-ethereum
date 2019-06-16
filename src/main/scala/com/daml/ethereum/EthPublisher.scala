@@ -11,6 +11,7 @@ import org.web3j.tx.Transfer
 import org.web3j.utils.Convert
 
 object EthPublisher extends App {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val web3: Web3j = Web3j.build(new HttpService("http://127.0.0.1:8545"))
   //    Web3j.build(new HttpService("https://mainnet.infura.io/v3/533d2271072844c38be956e2093d8577"))
@@ -23,6 +24,7 @@ object EthPublisher extends App {
   ethPublisher.transfer("0xe96beb2cbabf3fe4866a5885f863c736b8f7a0a7",
                         BigDecimal.valueOf(1.0),
                         Convert.Unit.GWEI)
+  logger.info("client version" + ethPublisher.getClientVersion)
 }
 
 class EthPublisher(web3j: Web3j, credentials: Credentials) {
@@ -33,10 +35,9 @@ class EthPublisher(web3j: Web3j, credentials: Credentials) {
     logger.info(s"Transaction receipt: $transactionReceipt")
   }
 
-  def getClientVersion(): Unit = {
+  def getClientVersion: String = {
     val web3ClientVersion = web3.web3ClientVersion().send()
-    val clientVersion = web3ClientVersion.getWeb3ClientVersion
-    println(clientVersion)
+    web3ClientVersion.getWeb3ClientVersion
   }
 
   def sendTransaction() = {
