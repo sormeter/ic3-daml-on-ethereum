@@ -185,8 +185,10 @@ template User
           realEstateListing: ContractId RealEstateIssue
           quantity: Int
           selfContract: ContractId User
+          directory: ContractId Directory
         do
           to_ <- fetch realEstateListing
+          dirDeref <- fetch directory
 
           newBid <- create RealEstateBuyinBid with 
             investor = user, issuer = to_.lister, ..
@@ -194,8 +196,18 @@ template User
           selfContract <- exercise selfContract User_AddObserver with
             viewer = to_.lister
           
+          allrates <- mapA (\cid -> 
+              do
+                rate <- fetch cid
+                return (rate.quoteCurr, cid)
+            ) dirDeref.exchangeRates
+          
+          rate <- fetch (snd (head (filter (\t -> fst t == to_.listing.currency) allrates)))
+
+          let amount = ((to_.listing.chunkFiatSizes * intToDecimal quantity) / rate.exchRate)
+
           transAuth <- create FundsTransferPermission with
-            sender = user, receiver = to_.lister, ..
+            sender = user, receiver = to_.lister, amount, ..
           
           return (newBid, transAuth)
       
@@ -246,7 +258,7 @@ template User
           newBalance: Decimal
         do
           create this with
-            etherBalance = newBalance
+            etherBalance = (etherBalance - newBalance)
             viewers = []
 
       nonconsuming User_UnlockRealEstateIssue: (
@@ -269,6 +281,7 @@ template FundsTransferPermission
     sender: Party
     receiver: Party
     selfContract: ContractId User
+    amount: Decimal
   where
     signatory sender
 

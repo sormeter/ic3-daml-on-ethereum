@@ -67,7 +67,7 @@ scenarioTestsFull = scenario do
 
   (u2BuyinBid_1, u2_TransferFunds_u1) <- submit u2 do
     exercise u2C User_BuyinToIssue with
-      realEstateListing = u1_realEstateListing_1, quantity = 2000, selfContract = u2C
+      realEstateListing = u1_realEstateListing_1, quantity = 2000, selfContract = u2C, directory
 
   (u1_erc20Token, u1_realEstateListing_1, u2_Shares_1, directory, u1C) <- submit u1 do
     exercise u1C User_AcceptBuyinBid with
